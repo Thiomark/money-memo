@@ -12,10 +12,12 @@ import { TouchableOpacity, View, Text } from 'react-native';
 import { Icon } from 'react-native-elements';
 import tw from 'tailwind-react-native-classnames';
 import { BudgetContext } from '../providers/BudgetProvider';
+import { DeductionContext } from '../providers/DeductionProvider';
 
 const HomeStack = () => {
     const Stack = createNativeStackNavigator();
-    const {fetchDeductions, fetchBudgets, fetchedDate} = useContext(BudgetContext);
+    const {fetchBudgets} = useContext(BudgetContext);
+    const {fetchDeductions, fetchedDeductions} = useContext(DeductionContext);
 
     const formateAmount = (amount) => {
         return 'R ' + (amount).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,')
@@ -58,7 +60,7 @@ const HomeStack = () => {
                         return (
                             <View>
                                 <Text style={tw`text-gray-50 text-lg font-bold`}>{formateAmount(route.params.amount)}</Text> 
-                                <Text style={tw`text-green-300 font-bold -mt-1.5`}>{formateAmount(route.params.amount + fetchedDate.reduce((a, b) => b.amount + a, 0))}</Text>
+                                <Text style={tw`text-green-300 font-bold -mt-1.5`}>{formateAmount(route.params.amount + fetchedDeductions.reduce((a, b) => b.amount + a, 0))}</Text>
                             </View>
                         )
                     },

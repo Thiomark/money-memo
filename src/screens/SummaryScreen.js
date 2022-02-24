@@ -4,11 +4,11 @@ import Container from '../shared/Container';
 import tw from 'tailwind-react-native-classnames';
 import { Image } from 'react-native-elements';
 import { useRoute } from '@react-navigation/native';
-import { BudgetContext } from '../providers/BudgetProvider';
+import { DeductionContext } from '../providers/DeductionProvider';
 import * as ImagePicker from 'expo-image-picker';
 
 const SummaryScreen = ({navigation}) => {
-    const {deduction, fetchDeduction, url, uploadImage, removeDeduction} = useContext(BudgetContext);
+    const {deduction, fetchDeduction, url, uploadImage, removeDeduction} = useContext(DeductionContext);
     const {params} = useRoute();
     const [image, setImage] = useState(null)
 

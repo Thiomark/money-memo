@@ -1,8 +1,6 @@
 import React from "react";
 import HomeStack from './HomeStack';
-import LiveStack from './LiveStack';
-import SessionStack from "./SessionStack";
-import ProfileStack from './ProfileStack';
+import ProfileScreen from '../screens/ProfileScreen';
 import { Icon } from 'react-native-elements';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
@@ -11,7 +9,7 @@ const Tab = createBottomTabNavigator();
 const AppTabs = () => {
     return (
         <Tab.Navigator
-            initialRouteName='LiveStack'
+            initialRouteName='HomeStack'
             screenOptions={({ route }) => ({
                 tabBarIcon: ({ focused, color, size }) => {
                     let iconName;
@@ -41,7 +39,7 @@ const AppTabs = () => {
             })}
         >
             <Tab.Screen name="HomeStack" options={{ headerShown: false}} component={HomeStack} />
-            {/* <Tab.Screen name="ProfileStack" options={{ headerShown: false}} component={ProfileStack} /> */}
+            <Tab.Screen name="ProfileStack" options={{ headerShown: true, title: 'Profile'}} component={ProfileScreen} />
         </Tab.Navigator>
     )
 }

@@ -3,10 +3,9 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { ImageBackground, TouchableOpacity } from 'react-native';
 import { Text, View, Dimensions, TextInput, ActivityIndicator } from "react-native";
 import tw from 'tailwind-react-native-classnames';
-import {useRoute} from '@react-navigation/native';
-import { AuthContext } from "../src/AuthProvider";
-import Wrapper from "../shared/Wrapper";
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useRoute } from '@react-navigation/native';
+import { AuthContext } from "../providers/AuthProvider";
+import Wrapper from "../shared/Container";
 
 const Stack = createNativeStackNavigator();
 const {width, height} = Dimensions.get('screen');
@@ -47,16 +46,10 @@ const SubmitButton = ({ button, submit }) => {
 
 const Auth = ({ navigation }) => {
 
-    const [username, setUsername] = useState(null);
+    const [email, setEmail] = useState(null);
+    const [name, setName] = useState(null)
     const [password, setPassword] = useState(null);
-    const [url, setUrl] = useState(null);
     const { login, register } = useContext(AuthContext);
-
-    useEffect(() => {
-        AsyncStorage.getItem('url')
-            .then(res => setUrl(res.replaceAll('http://', '').replaceAll(':5500', '')))
-            .catch(err => {});  
-    }, [])
 
     const route = useRoute();
 
@@ -67,8 +60,8 @@ const Auth = ({ navigation }) => {
                 style={{flex: 1, justifyContent: "center"}}
                 source={
                     route.name === 'Login' ?
-                    require('../assets/image_processing20211123-13917-3pc0j8.png') :
-                    require('../assets/7d5a98edbd3e3719c6d446c9023f30cf.png')
+                    require('../../assets/image_processing20211123-13917-3pc0j8.png') :
+                    require('../../assets/7d5a98edbd3e3719c6d446c9023f30cf.png')
                 }
             >
                 <View style={[tw`bg-black opacity-30`, {flex: 1, height, width}]}>
@@ -76,21 +69,25 @@ const Auth = ({ navigation }) => {
                 <View style={[{padding: 20, top: '20%'}, tw`absolute w-full`]}>
                     <TextInput
                         style={[tw`border-gray-500 bg-black mb-3 p-4 border text-white rounded-lg`]}
-                        placeholder='Username'
-                        onChangeText={text => setUsername(text)}
+                        placeholder='Email'
+                        onChangeText={text => setEmail(text)}
                         placeholderTextColor="white" 
                     />
+                    {
+                        route.name === 'Register' && (
+                            <TextInput
+                                style={[tw`border-gray-500 bg-black mb-3 p-4 border text-white rounded-lg`]}
+                                placeholder='Name'
+                                onChangeText={text => setName(text)}
+                                placeholderTextColor="white" 
+                            />
+                        )
+                    }
+                    
                     <TextInput
                         style={[tw`border-gray-500 bg-black mb-3 p-4 border text-white rounded-lg`]}
                         placeholder='Password'
                         onChangeText={text => setPassword(text)}
-                        placeholderTextColor="white" 
-                    />
-                    <TextInput
-                        style={[tw`border-gray-500 bg-black p-4 border text-white rounded-lg`]}
-                        placeholder='Url'
-                        value={url}
-                        onChangeText={text => setUrl(text)}
                         placeholderTextColor="white" 
                     />
                 </View>
@@ -108,9 +105,9 @@ const Auth = ({ navigation }) => {
                     </View>
                     {
                         route.name === 'Login' ? (
-                            <SubmitButton submit={() => login(username, password, url)} button='Sign In' />
+                            <SubmitButton submit={() => login(email, password)} button='Sign In' />
                         ) : (
-                            <SubmitButton submit={() => register(username, password, url)} button='Sign Up' />
+                            <SubmitButton submit={() => register(email, name, password)} button='Sign Up' />
                         )
                     }
                 </View>

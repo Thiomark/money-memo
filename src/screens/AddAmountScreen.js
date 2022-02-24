@@ -3,13 +3,15 @@ import React, {useContext, useEffect, useState} from 'react'
 import Container from '../shared/Container'
 import tw from 'tailwind-react-native-classnames'
 import { BudgetContext } from '../providers/BudgetProvider'
+import { DeductionContext } from '../providers/DeductionProvider'
 import { useRoute } from '@react-navigation/native'
 
 const AddAmountScreen = ({navigation}) => {
     const [amount, setAmount] = useState(null);
     const [description, setDescription] = useState(null);
-    const [tags, setTags] = useState('');
-    const {image, addAmount, addBudget, setImage} = useContext(BudgetContext);
+    const [tags, setTags] = useState(null);
+    const { addBudget } = useContext(BudgetContext);
+    const {image, addDeduction, setImage} = useContext(DeductionContext);
     const {params} = useRoute(); 
 
     return (
@@ -45,13 +47,12 @@ const AddAmountScreen = ({navigation}) => {
                 <TouchableOpacity onPress={() => {
                     if(params.type === 'deductAmount'){
                         if(Number(amount)){
-                            addAmount({
-                                budgetsID: params.budgetsID,
+                            addDeduction({
                                 amount: Number(amount),
                                 description,
                                 tags,
                                 image: image ? image.uri : null
-                            })
+                            }, params.budgetsID)
                         }
                         setDescription(null);
                         setAmount(null);
