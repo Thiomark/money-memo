@@ -1,12 +1,12 @@
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer, DarkTheme } from '@react-navigation/native';
-import AppTabs from '../stacks/AuthStack'
+import AppStack from '../stacks/AppStack'
 
 const Routes = () => {
     return (
         <NavigationContainer theme={DarkTheme}>
             <SafeAreaProvider>
-                <AppTabs />
+                <AppStack />
             </SafeAreaProvider>
         </NavigationContainer>
     );

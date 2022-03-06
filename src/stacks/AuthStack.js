@@ -23,13 +23,13 @@ const RouteButton = ({navigate, button }) => {
     )
 }
 
-const SubmitButton = ({ button, submit }) => {
+const SubmitButton = ({ button, submit, disabled }) => {
     const { isSubmitting } = useContext(AuthContext);
 
     return (
         <TouchableOpacity 
-            style={tw`bg-gray-50 w-full h-14 rounded-xl flex items-center justify-center`}
-            disabled={isSubmitting}
+            style={tw` ${!disabled ? 'bg-gray-50' : 'bg-gray-400'} w-full h-14 rounded-xl flex items-center justify-center`}
+            disabled={isSubmitting || disabled}
             onPress={() => {
                 submit();
             }}
@@ -49,9 +49,14 @@ const Auth = ({ navigation }) => {
     const [email, setEmail] = useState(null);
     const [name, setName] = useState(null)
     const [password, setPassword] = useState(null);
-    const { login, register } = useContext(AuthContext);
+    const { login, register, user } = useContext(AuthContext);
 
     const route = useRoute();
+
+    useEffect(() => {
+        if(user) navigation.navigate('App');
+    }, [user])
+    
 
     return(
         <Wrapper x={0}>
@@ -105,9 +110,9 @@ const Auth = ({ navigation }) => {
                     </View>
                     {
                         route.name === 'Login' ? (
-                            <SubmitButton submit={() => login(email, password)} button='Sign In' />
+                            <SubmitButton disabled={!email || !password} submit={() => login(email, password)} button='Sign In' />
                         ) : (
-                            <SubmitButton submit={() => register(email, name, password)} button='Sign Up' />
+                            <SubmitButton disabled={!email || !password || !name} submit={() => register(email, name, password)} button='Sign Up' />
                         )
                     }
                 </View>

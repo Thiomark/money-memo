@@ -3,21 +3,22 @@ import React, { useContext } from 'react';
 import HomeScreen from '../screens/HomeScreen';
 import DeductionsScreen from '../screens/DeductionsScreen';
 import SummaryScreen from '../screens/SummaryScreen';
-import ImageScreen from '../screens/ImageScreen'
-import AddAmountScreen from '../screens/AddAmountScreen'
-import CameraScreen from '../screens/CameraScreen'
-import ImagePickerScreen from '../screens/ImagePickerScreen'
+import ImageScreen from '../screens/ImageScreen';
+import AddAmountScreen from '../screens/AddAmountScreen';
+import AddPeopleScreen from '../screens/AddPeopleScreen'
+import CameraScreen from '../screens/CameraScreen';
+import ImagePickerScreen from '../screens/ImagePickerScreen';
 //import ImagePickerButton from '../components/ImagePickerButton'
 import { TouchableOpacity, View, Text } from 'react-native';
 import { Icon } from 'react-native-elements';
 import tw from 'tailwind-react-native-classnames';
-import { BudgetContext } from '../providers/BudgetProvider';
 import { DeductionContext } from '../providers/DeductionProvider';
+import { AuthContext } from '../providers/AuthProvider';
 
 const HomeStack = () => {
     const Stack = createNativeStackNavigator();
-    const {fetchBudgets} = useContext(BudgetContext);
-    const {fetchDeductions, fetchedDeductions} = useContext(DeductionContext);
+    const {fetchedDeductions} = useContext(DeductionContext);
+    const {user, logout} = useContext(AuthContext)
 
     const formateAmount = (amount) => {
         return 'R ' + (amount).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,')
@@ -34,20 +35,27 @@ const HomeStack = () => {
             })} 
         >
             <Stack.Screen  
-                options={() => ({
+                options={({navigation}) => ({
                     headerTitle: 'Home',
                     headerRight: () => {
                         return (
-                            <TouchableOpacity
-                                onPress={() => fetchBudgets()}
-                            >
-                                <Icon 
-                                    type='ionicon'
-                                    name='refresh-outline'
-                                    size={28}
-                                    color='white'
-                                />
-                            </TouchableOpacity>
+                            <View style={tw`flex flex-row`}>
+                                {
+                                    user ? (
+                                        <TouchableOpacity
+                                            onPress={logout}
+                                        >
+                                            <Text style={tw`font-bold uppercase text-red-400 text-xs`}>Sign out</Text>
+                                        </TouchableOpacity>
+                                    ) : (
+                                        <TouchableOpacity
+                                            onPress={() => navigation.navigate('Auth')}
+                                        >
+                                            <Text style={tw`font-bold uppercase text-green-400 text-xs`}>Sign in</Text>
+                                        </TouchableOpacity>
+                                    )
+                                }
+                            </View>
                         )
                     }
                 })}
@@ -63,20 +71,6 @@ const HomeStack = () => {
                                 <Text style={tw`text-green-300 font-bold -mt-1.5`}>{formateAmount(route.params.amount + fetchedDeductions.reduce((a, b) => b.amount + a, 0))}</Text>
                             </View>
                         )
-                    },
-                    headerRight: () => {
-                        return (
-                            <TouchableOpacity
-                                onPress={() => fetchDeductions(route.params.id)}
-                            >
-                                <Icon 
-                                    type='ionicon'
-                                    name='refresh-outline'
-                                    size={28}
-                                    color='white'
-                                />
-                            </TouchableOpacity>
-                        )
                     }
                 })}
                 name='Deductions'
@@ -89,8 +83,7 @@ const HomeStack = () => {
                 name='SummaryScreen' 
                 component={SummaryScreen}
             />
-            <Stack.Screen  
-            
+            <Stack.Screen            
                 options={() => ({
                     headerShown: false
                 })}
@@ -131,6 +124,13 @@ const HomeStack = () => {
                 })}
                 name='ImagePickerScreen' 
                 component={ImagePickerScreen}
+            />
+            <Stack.Screen  
+                options={() => ({
+                    headerTitle: `Add User`,
+                })}
+                name='AddPeopleScreen' 
+                component={AddPeopleScreen}
             />
         </Stack.Navigator>
     )
