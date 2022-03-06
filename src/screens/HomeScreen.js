@@ -1,19 +1,15 @@
-import { Text, View, TouchableOpacity, SectionList, Dimensions} from 'react-native';
+import { Text, View, TouchableOpacity, SectionList } from 'react-native';
 import { formatDistanceToNow, format } from 'date-fns';
 import { BottomSheet, ListItem } from 'react-native-elements';
 import Container from '../shared/Container';
 import React, { useContext, useEffect, useState } from 'react';
 import tw from 'tailwind-react-native-classnames';
 import { BudgetContext } from '../providers/BudgetProvider';
-import { AuthContext } from '../providers/AuthProvider';
 import AddDeductionButton from '../components/AddDeductionButton';
 
 const HomeScreen = ({navigation}) => {
-    const {fetchBudgets, budgets, deleteBudget} = useContext(BudgetContext);
-    const {user} = useContext(AuthContext);
+    const {budgets, deleteBudget} = useContext(BudgetContext);
     const [selectedItem, setSelectedItem] = useState(null);
-    const [isFetching, setIsFetching] = useState(false);
-
     const [isVisible, setIsVisible] = useState(false);
     const list = [
         { 
@@ -48,18 +44,10 @@ const HomeScreen = ({navigation}) => {
         return 'R ' + (amount).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,')
     }
 
-    useEffect(() => {
-        fetchBudgets();
-        setIsFetching(false);
-    }, [user]);
-
     return (
         <Container sides={1}>
             <View style={tw`h-full relative`}>
-                <SectionList 
-                    isFetching={isFetching}
-                    onRefresh={fetchBudgets}
-                    refreshing={isFetching}
+                <SectionList
                     sections={budgets}
                     keyExtractor={(item, index) => index.toString()}
                     renderSectionHeader={({ section: { group } }) => (
@@ -81,7 +69,14 @@ const HomeScreen = ({navigation}) => {
                         >
                             <View style={tw`flex-1`}>
                                 <View style={tw`flex flex-row items-center justify-between`}>
-                                    <Text style={tw`text-green-300 font-bold`}>{item.remaining_amount && formateAmount(item?.remaining_amount)}</Text>
+                                    <View style={tw`flex flex-row items-center`}>
+                                        <Text style={tw`text-green-300 font-bold`}>{item.remaining_amount && formateAmount(item?.remaining_amount)}</Text>
+                                        {
+                                            !item.user_id &&
+                                            <View style={tw`h-2 w-2 rounded-full bg-red-500 ml-3`}/>
+                                        }
+                                    </View>
+                                    
                                     {
                                         item.removed_amount < 0 && (
                                             <Text style={tw`text-red-500 text-xs font-bold`}>{formateAmount(item?.removed_amount)}</Text>

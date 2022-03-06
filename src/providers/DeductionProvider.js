@@ -90,7 +90,7 @@ export const DeductionProvider = ({children}) => {
                 tags: amount.tags,
                 amount: -amount.amount,
                 created_on: amount.created_on
-            })
+            });
 
             setFetchedDeductions(pevDe => [res.data, ...pevDe]);
         } catch (error) {
