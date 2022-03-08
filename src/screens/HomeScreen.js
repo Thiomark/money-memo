@@ -5,11 +5,13 @@ import Container from '../shared/Container';
 import React, { useContext, useEffect, useState } from 'react';
 import tw from 'tailwind-react-native-classnames';
 import { BudgetContext } from '../providers/BudgetProvider';
+import { DeductionContext } from '../providers/DeductionProvider';
 import { AuthContext } from '../providers/AuthProvider';
 import AddDeductionButton from '../components/AddDeductionButton';
 
 const HomeScreen = ({navigation}) => {
-    const {fetchBudgets, budgets, deleteBudget} = useContext(BudgetContext);
+    const {fetchBudgets, budgets, deleteBudget, addBudget} = useContext(BudgetContext);
+    const {fetchLocalDeductions, storedDeductions} = useContext(DeductionContext);
     const {user} = useContext(AuthContext);
     const [selectedItem, setSelectedItem] = useState(null);
     const [isFetching, setIsFetching] = useState(false);
@@ -19,13 +21,17 @@ const HomeScreen = ({navigation}) => {
         { 
             title: 'View Deductions',
             onPress: () => {
-                navigation.navigate('Deductions', {id: selectedItem.id, amount: selectedItem.budget});
+                fetchLocalDeductions(selectedItem.id)
+                navigation.navigate('Deductions', {id: selectedItem?.id, amount: selectedItem?.budget});
             }
         },
         { 
             title: 'Add User',
             onPress: () => {
-                navigation.navigate('AddPeopleScreen', {id: selectedItem.id});
+                if(!user) 
+                    navigation.navigate('Auth');
+                else
+                    navigation.navigate('AddPeopleScreen', {id: selectedItem.id});
             }
         },
         { 
@@ -71,7 +77,8 @@ const HomeScreen = ({navigation}) => {
                     renderItem={({item}) => (
                         <TouchableOpacity 
                             onPress={() => {
-                                navigation.navigate('Deductions', {id: item?.id, amount: item?.budget});
+                                fetchLocalDeductions(item.id)
+                                navigation.navigate('Deductions', {id: item.id, amount: item.budget});
                             }} 
                             onLongPress={() => {
                                 setSelectedItem(item)
@@ -81,10 +88,18 @@ const HomeScreen = ({navigation}) => {
                         >
                             <View style={tw`flex-1`}>
                                 <View style={tw`flex flex-row items-center justify-between`}>
-                                    <Text style={tw`text-green-300 font-bold`}>{item.remaining_amount && formateAmount(item?.remaining_amount)}</Text>
+                                    <View style={tw`flex items-center flex-row`}>
+                                        <Text style={tw`text-green-300 font-bold`}>{item.remaining_amount && formateAmount(item.budget + storedDeductions.filter(bg => bg.budgets_id === item.id).reduce((a, b) => b.amount + a, 0))}</Text>
+                                        {
+                                            !item.user_id && (
+                                                <View style={tw`h-2 w-2 ml-2 rounded-full bg-yellow-500`}/>
+                                            )
+                                        }
+                                    </View>
+                                    
                                     {
-                                        item.removed_amount < 0 && (
-                                            <Text style={tw`text-red-500 text-xs font-bold`}>{formateAmount(item?.removed_amount)}</Text>
+                                        storedDeductions.filter(bg => bg.budgets_id === item.id).reduce((a, b) => b.amount + a, 0) < 0 && (
+                                            <Text style={tw`text-red-500 text-xs font-bold`}>{formateAmount(storedDeductions.filter(bg => bg.budgets_id === item.id).reduce((a, b) => b.amount + a, 0))}</Text>
                                         )
                                     }
                                 </View>
@@ -97,6 +112,22 @@ const HomeScreen = ({navigation}) => {
                     navigation.navigate('AddAmountScreen', {type: 'addBudget'})
                 }}/>
                 <BottomSheet modalProps={{}} isVisible={isVisible}>
+                    {
+                        !selectedItem?.user_id && (
+                            <ListItem
+                                onPress={() => {
+                                    setIsVisible(false);
+                                    setSelectedItem(null);
+                                    if(!user) return navigation.navigate('Auth');
+                                    addBudget(selectedItem, true)
+                                }}
+                            >
+                                <ListItem.Content>
+                                    <ListItem.Title>Save to server</ListItem.Title>
+                                </ListItem.Content>
+                            </ListItem>
+                        )
+                    }
                     {list.map((l, i) => (
                     <ListItem
                         key={i}

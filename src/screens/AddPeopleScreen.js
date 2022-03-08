@@ -5,10 +5,10 @@ import tw from 'tailwind-react-native-classnames';
 import { useRoute } from '@react-navigation/native';
 import { BudgetContext } from '../providers/BudgetProvider';
 
-const AddAmountScreen = ({navigation}) => {
+const AddAmountScreen = ({}) => {
     const [user, setUser] = useState(null);
     const {addUser} = useContext(BudgetContext)
-    const {params} = useRoute(); 
+    const {params} = useRoute();
 
     return (
         <Container>

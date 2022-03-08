@@ -8,7 +8,6 @@ import AddAmountScreen from '../screens/AddAmountScreen';
 import AddPeopleScreen from '../screens/AddPeopleScreen'
 import CameraScreen from '../screens/CameraScreen';
 import ImagePickerScreen from '../screens/ImagePickerScreen';
-//import ImagePickerButton from '../components/ImagePickerButton'
 import { TouchableOpacity, View, Text } from 'react-native';
 import { Icon } from 'react-native-elements';
 import tw from 'tailwind-react-native-classnames';
@@ -17,7 +16,7 @@ import { AuthContext } from '../providers/AuthProvider';
 
 const HomeStack = () => {
     const Stack = createNativeStackNavigator();
-    const {fetchedDeductions} = useContext(DeductionContext);
+    const {storedDeductions} = useContext(DeductionContext);
     const {user, logout} = useContext(AuthContext)
 
     const formateAmount = (amount) => {
@@ -30,7 +29,7 @@ const HomeStack = () => {
             screenOptions={() => ({
                 headerTintColor: 'white',
                 headerStyle: {
-                    backgroundColor: '#212121',
+                    backgroundColor: '#212121'
                 },
             })} 
         >
@@ -68,7 +67,7 @@ const HomeStack = () => {
                         return (
                             <View>
                                 <Text style={tw`text-gray-50 text-lg font-bold`}>{formateAmount(route.params.amount)}</Text> 
-                                <Text style={tw`text-green-300 font-bold -mt-1.5`}>{formateAmount(route.params.amount + fetchedDeductions.reduce((a, b) => b.amount + a, 0))}</Text>
+                                <Text style={tw`text-green-300 font-bold -mt-1.5`}>{formateAmount(route.params.amount + (storedDeductions.filter(bg => bg.budgets_id === route.params.id).reduce((a, b) => b.amount + a, 0)))}</Text>
                             </View>
                         )
                     }

@@ -1,0 +1,1 @@
+gs://budget-app-store-images.appspot.com/

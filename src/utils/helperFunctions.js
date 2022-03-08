@@ -20,5 +20,3 @@ export const groupItems = (data, tag) => {
 export const formateAmount = (amount) => {
     return 'R ' + (amount).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,')
 }
-
-export const url = 'http://192.168.0.101:5000/api/v1' //! 'https://budget-as3rd.herokuapp.com/api/v1'

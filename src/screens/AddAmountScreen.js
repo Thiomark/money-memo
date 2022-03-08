@@ -1,4 +1,4 @@
-import { Text, SafeAreaView, TextInput, TouchableOpacity, View, Button } from 'react-native';
+import { Text, SafeAreaView, TextInput, TouchableOpacity, View } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import React, {useContext, useEffect, useState} from 'react';
 import Container from '../shared/Container';
@@ -32,18 +32,26 @@ const AddAmountScreen = ({navigation}) => {
     const showDatepicker = () => {
         showMode('date');
     };
-    
-    const showTimepicker = () => {
-        showMode('time');
-    };
 
-    const [amount, setAmount] = useState(null);
+    const {params} = useRoute(); 
+    const [amount, setAmount] = useState();
     const [description, setDescription] = useState(null);
     const [tags, setTags] = useState(null);
-    const { addBudget } = useContext(BudgetContext);
-    const {image, addDeduction, setImage} = useContext(DeductionContext);
-    const {params} = useRoute(); 
 
+    const {addBudget} = useContext(BudgetContext);
+    const {addDeduction, editDeduction, fetchLocalDeductions} = useContext(DeductionContext);
+
+    useEffect(() => {
+        if(params?.edit){
+            const {amount: amt} = params.edit
+            setDescription(params.edit.description);
+            setTags(params.edit.tags);
+            setAmount((-amt).toString());
+            setDate(new Date(params.edit.created_on));
+            setCreatedOn(new Date (params.edit.created_on));
+        }
+    }, [])
+    
     return (
         <Container>
             <SafeAreaView style={tw`p-2 flex-1`}>
@@ -51,6 +59,7 @@ const AddAmountScreen = ({navigation}) => {
                     <TextInput
                         style={[tw`rounded bg-gray-400 mb-1 text-black p-3`]}
                         onChangeText={setAmount}
+                        value={amount}
                         placeholder='Enter amount'
                         keyboardType="numeric"
                     />
@@ -59,11 +68,13 @@ const AddAmountScreen = ({navigation}) => {
                             <TextInput
                                 style={[tw`rounded bg-gray-400 mb-1 text-black p-3`]}
                                 onChangeText={setTags}
+                                value={tags}
                                 placeholder="tags"
                             />
                             <TextInput
                                 style={[{ height:200, textAlignVertical: 'top'}, tw`rounded text-black mb-1 bg-gray-400 p-3`]}
                                 multiline={true}
+                                value={description}
                                 numberOfLines={4}
                                 onChangeText={setDescription}
                                 placeholder="Amount description"
@@ -94,40 +105,68 @@ const AddAmountScreen = ({navigation}) => {
                             />
                         )}
                     </View>
-                    
                 </View>
-                
-                <TouchableOpacity onPress={() => {
-                    if(params.type === 'deductAmount'){
-                        if(Number(amount)){
-                            addDeduction({
-                                amount: Number(amount),
-                                description,
-                                tags,
-                                created_on,
-                                image: image ? image.uri : null
-                            }, params.budgetsID)
+                {!params.edit ?
+                    (<TouchableOpacity onPress={() => {
+                        if(params.type === 'deductAmount'){
+                            if(Number(amount)){
+                                addDeduction({
+                                    amount: -Number(amount),
+                                    description,
+                                    tags,
+                                    created_on,
+                                    budgets_id: params.budgetsID,
+                                    image: null,
+                                }, params.budgetsID)
+                            }
+                        }else{
+                            if(Number(amount)){
+                                addBudget({
+                                    budget: Number(amount),
+                                    created_on
+                                })
+                            }
                         }
                         setDescription(null);
                         setAmount(null);
-                    }else{
-                        if(Number(amount)){
-                            addBudget({
-                                budget: Number(amount),
-                                created_on
-                            })
-                            setDescription(null);
-                            setAmount(null);
-                        }
-                    }
-                   navigation.goBack()
-                }} style={[{backgroundColor: '#313238'}, tw`h-12 flex items-center justify-center rounded-lg`]}>
-                    <Text style={tw`font-bold text-gray-50 uppercase`}>{params.type === 'deductAmount' ? 'Add Deduction' : 'Add Amount'}</Text>
-                </TouchableOpacity>
+                        setTags(null);
+                        navigation.goBack()
+                    }} style={[{backgroundColor: '#313238'}, tw`h-12 flex items-center justify-center rounded-lg`]}>
+                        <Text style={tw`font-bold text-gray-50 uppercase`}>{params.type === 'deductAmount' ? 'Add Deduction' : 'Add Amount'}</Text>
+                    </TouchableOpacity>) : (
+                        <TouchableOpacity 
+                            onPress={() => {
+                                if(params.type === 'deductAmount'){
+                                    editDeduction(params.edit.budgets_id, params.edit.id, {
+                                        amount: -Number(amount),
+                                        budgets_id: params.edit.budgets_id,
+                                        image: params.edit.image,
+                                        description,
+                                        tags,
+                                        created_on,
+                                        id: params.edit.id,
+                                    })
+                                }else{
+
+                                }
+                                setTags(null);
+                                setDescription(null);
+                                setAmount(null);
+                                navigation.navigate('Deductions', {id: params.edit.id});
+                            }}
+                            style={[{backgroundColor: '#313238'}, tw`h-12 flex flex-row items-center justify-center rounded-lg`]}>
+                            <Icon 
+                                name='save-outline'
+                                color='white'
+                                type='ionicon'
+                            />
+                        </TouchableOpacity>
+                    )
+                }
+                
             </SafeAreaView>
         </Container>
     )
 }
-
 
 export default AddAmountScreen

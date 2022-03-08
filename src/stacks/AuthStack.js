@@ -110,7 +110,7 @@ const Auth = ({ navigation }) => {
                     </View>
                     {
                         route.name === 'Login' ? (
-                            <SubmitButton disabled={!email || !password} submit={() => login(email, password)} button='Sign In' />
+                            <SubmitButton disabled={!email || !password} submit={() => login({email, password})} button='Sign In' />
                         ) : (
                             <SubmitButton disabled={!email || !password || !name} submit={() => register(email, name, password)} button='Sign Up' />
                         )
