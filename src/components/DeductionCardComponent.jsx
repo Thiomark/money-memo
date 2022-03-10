@@ -1,9 +1,18 @@
-import { View, Text, TouchableOpacity } from 'react-native'
-import React from 'react'
+import { View, Text, TouchableOpacity, Image } from 'react-native'
+import React, { useContext, useEffect } from 'react'
 import tw from 'tailwind-react-native-classnames'
 import { Icon } from 'react-native-elements'
+import { DeductionContext } from '../providers/DeductionProvider'
 
-const DeductionCardComponent = ({item, isSelected, pressAndHold, viewDeduction, areDeductionsSelected, removeDeduction}) => {
+const DeductionCardComponent = ({item, isSelected, pressAndHold, viewDeduction, areDeductionsSelected, removeDeduction, navigation}) => {
+    const {firestoreImages} = useContext(DeductionContext);
+
+    const returnImage = (image) => {
+        const xr = firestoreImages.find(xx => xx.name === image);
+        if(xr) return xr.url
+        return false
+    }
+    
     return (
         <TouchableOpacity 
             style={tw`mb-1`}
@@ -52,6 +61,14 @@ const DeductionCardComponent = ({item, isSelected, pressAndHold, viewDeduction, 
                         </View>
                         {item.description && <Text style={tw`text-gray-300 text-xs`}>{item.description}</Text>}
                     </View>
+                    {returnImage(item.image) && (
+                        <TouchableOpacity 
+                            onPress={() => navigation.navigate('ImageScreen', { image: returnImage(item.image) })}
+                            style={tw`h-10 w-10 ml-2 rounded border border-gray-500`}
+                        >
+                            <Image source={{ uri: returnImage(item.image) }} style={[tw`flex-1 w-full rounded `, { width: '100%', height: '100%' }]} />
+                        </TouchableOpacity>
+                    )}
                 </View>
             </View>
         </TouchableOpacity>

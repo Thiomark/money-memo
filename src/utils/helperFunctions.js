@@ -20,3 +20,14 @@ export const groupItems = (data, tag) => {
 export const formateAmount = (amount) => {
     return 'R ' + (amount).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,')
 }
+
+export const url = 'http://192.168.0.101:5000/api/v2';
+
+export const createDeduction = (deduction) => {
+    return {
+        ...deduction, 
+        sign: 'temp',
+        created_on: new Date(deduction.created_on).toISOString(), 
+        id: Date.now()
+    };
+}

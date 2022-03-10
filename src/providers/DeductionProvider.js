@@ -5,6 +5,9 @@ import axiosInterceptor from '../utils/axiosInterceptor';
 import { ToastAndroid } from 'react-native';
 import { AuthContext } from './AuthProvider'
 import { BudgetContext } from './BudgetProvider';
+import {getStorage, ref, uploadBytes, deleteObject, listAll, getDownloadURL} from 'firebase/storage';
+import { createDeduction } from '../utils/helperFunctions'
+import {url} from '../utils/helperFunctions'
 
 export const DeductionContext = createContext();
 
@@ -12,8 +15,10 @@ export const DeductionProvider = ({children}) => {
     const [storedDeductions, setStoredDeductions] = useState([]);
     const [deductions, setDeductions] = useState([]);
     const [deduction, setDeduction] = useState(null);
+    const [image, setImage] = useState(null);
     const {user} = useContext(AuthContext);
-    const {fetchBudgets} = useContext(BudgetContext)
+    const {fetchBudgets} = useContext(BudgetContext);
+    const [firestoreImages, setFirestoreImages] = useState([]);
 
     useEffect(() => {
         AsyncStorage.getItem('deductions')
@@ -32,13 +37,30 @@ export const DeductionProvider = ({children}) => {
 
     const fetchServerDeductions = (id) => {
         if(!user) return;
-        
         axiosInterceptor.get(`/deductions/${id}`)
             .then(({data}) => {
                 const updatedArray = storedDeductions.filter(x => x.sign || x.budgets_id !== id);
                 const updatedDeductions = [...data, ...updatedArray];
                 setStoredDeductions(updatedDeductions);
             });
+    }
+
+    const fetchImages = (id) => {
+        const storage = getStorage();
+        const listRef = ref(storage, `budgets/${id}`);
+
+        listAll(listRef)
+            .then((res) => {
+                res.items.forEach((itemRef) => {
+                    getDownloadURL(ref(storage, `budgets/${id}/${itemRef.name}`))
+                        .then((url) => {
+                            setFirestoreImages(prev => [...prev, {url, name: itemRef.name}])
+                        })
+                });
+            })
+            .finally(() => {
+                console.log(firestoreImages)
+            })
     }
 
     const fetchLocalDeductions = (id, arrayOfDeductions) => {
@@ -55,12 +77,7 @@ export const DeductionProvider = ({children}) => {
 
     const addDeduction = async (deduction, id, retry = false) => {
 
-        const newDeduction = {
-            ...deduction, 
-            sign: 'temp',
-            created_on: new Date(deduction.created_on).toISOString(), 
-            id: Date.now()
-        };
+        const newDeduction = createDeduction(deduction);
 
         if(!retry){
             fetchLocalDeductions(id, [newDeduction, ...storedDeductions]);
@@ -72,6 +89,25 @@ export const DeductionProvider = ({children}) => {
                 return;
             };
         }
+
+        let imageName = null;
+
+        if(deduction.image && user){
+            try {
+                imageName = `budget-img-${Date.now()}-${deduction.amount}`
+                const storage = getStorage();
+                const reff = ref(storage, `budgets/${id}/${imageName}`);
+                const img = await fetch(deduction.image);
+                const bytes = await img.blob();
+                console.log(bytes);
+                await uploadBytes(reff, bytes);
+            } catch (error) {
+                imageName = null;
+                ToastAndroid.showWithGravityAndOffset('Image not saved', ToastAndroid.LONG, ToastAndroid.BOTTOM, 0, 50);
+            }
+        }
+
+        deduction.image = imageName;
 
         axiosInterceptor.post(`/deductions/${id}`, deduction)
             .then(({data}) => {
@@ -111,8 +147,19 @@ export const DeductionProvider = ({children}) => {
         
     }
 
-    const deleteDeduction = async (budgetID, id) => {
+    const deleteDeduction = async (budgetID, id, imageUrl) => {
+
         fetchLocalDeductions(budgetID, storedDeductions.filter(x => x.id !== id));
+
+        try {
+            if(imageUrl && user){
+                const storage = getStorage();
+                const desertRef = ref(storage, `budgets/${id}/${imageUrl}`);
+                await deleteObject(desertRef)
+            }
+        } catch (error) {
+            console.log(error);
+        }
 
         axiosInterceptor.delete(`/deductions/${budgetID}/${id}`)
             .then(() => {
@@ -128,70 +175,13 @@ export const DeductionProvider = ({children}) => {
         fetchBudgets();
     }
 
+    const tagOtherDeductions = (img) => {
+        
+    }
+
     return (
-        <DeductionContext.Provider value={{deductions, storedDeductions, fetchServerDeductions, deduction, editDeduction, fetchSingleDeduction, fetchLocalDeductions, addDeduction, deleteDeduction}}>
+        <DeductionContext.Provider value={{deductions, setImage, image, storedDeductions, fetchImages, firestoreImages, tagOtherDeductions, fetchServerDeductions, deduction, editDeduction, fetchSingleDeduction, fetchLocalDeductions, addDeduction, deleteDeduction}}>
             {children}
         </DeductionContext.Provider>
     )
 }
-
-/*
-
-
-    const uploadImage = async (id, image) => {
-        try {
-            const imageName = `${Date.now()}-proof.jpg`;
-            const formData = new FormData();
-            formData.append('photo', { uri: image.image, name: imageName, type: 'image/jpg' });
-
-            await fetch(`/deductions/image`, {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'content-type': 'multipart/form-data',
-                },
-            });
-
-            await axiosInterceptor.post(`/deductions/${id}`, {
-                image: imageName
-            });
-        } catch (error) {
-            
-        }
-    }
-
-    const addDeduction = async (amount, budgetID) => {
-        let imageName = null;
-        // if(amount.image){
-        //     imageName = `${Date.now()}-proof.jpg`;
-        //     const formData = new FormData();
-        //     formData.append('photo', { uri: amount.image, name: imageName, type: 'image/jpg' });
-
-        //     await fetch(`/deductions/image`, {
-        //         method: 'POST',
-        //         body: formData,
-        //         headers: {
-        //             'content-type': 'multipart/form-data',
-        //         },
-        //     });
-        // }
-
-        try {
-            const res = await axiosInterceptor.post(`/deductions/${budgetID}`, {
-                image: imageName,
-                description: amount.description,
-                tags: amount.tags,
-                amount: -amount.amount,
-                created_on: amount.created_on
-            })
-
-            setFetchedDeductions(pevDe => [res.data, ...pevDe]);
-        } catch (error) {
-            console.log(error.message)
-        }
-
-        setImage(null)
-    }
-
-
-*/

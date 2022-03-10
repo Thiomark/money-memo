@@ -5,25 +5,26 @@ import { Camera } from 'expo-camera';
 import Container from '../shared/Container';
 import tw from 'tailwind-react-native-classnames';
 import { Icon } from 'react-native-elements';
-import { BudgetContext } from '../providers/BudgetProvider';
+import { DeductionContext } from '../providers/DeductionProvider';
 
 const CameraScreen = ({navigation}) => {
-    const [image, setChoosenImage] = useState(null);
     const cameraRef = useRef(null);
-    const {setImage} = useContext(BudgetContext)
+    const {setImage, image} = useContext(DeductionContext)
 
     const pickImage = async () => {
-        let result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.All,
-            allowsEditing: true,
-            aspect: [4, 3],
-            quality: 1,
-        });
-
-        if (!result.cancelled) {
-            setChoosenImage(result.uri);
-            setImage(result.uri)
-        }
+        try {
+            let result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ImagePicker.MediaTypeOptions.All,
+                allowsEditing: true,
+                aspect: [4, 3],
+                quality: 1,
+            });
+    
+            if (!result.cancelled) {
+                console.log(result.uri)
+                setImage(result.uri)
+            }
+        } catch (e) {}
     };
 
     const takeImage = async () => {
@@ -35,7 +36,6 @@ const CameraScreen = ({navigation}) => {
                     quality:1,
                 });
                 setImage(photo.uri);
-                setChoosenImage(photo.uri);
             }
             catch (e) { }
         }

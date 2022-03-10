@@ -16,7 +16,7 @@ const IconButton = ({name, size = 25, color='white', event}) => {
     )
 }
 
-const SelectDeduction = ({deleteEvent, cancelEvent, selectedDeductions, editEvent, upload, canUpload}) => {
+const SelectDeduction = ({deleteEvent, cancelEvent, selectedDeductions, editEvent, upload, canUpload, tageDeductions}) => {
     return (
         <View style={[tw`max-h-16 -mt-2 flex-1 flex items-center justify-between px-3 flex-row`, {backgroundColor: '#212121'}]}>
             <IconButton 
@@ -25,6 +25,7 @@ const SelectDeduction = ({deleteEvent, cancelEvent, selectedDeductions, editEven
                 size={35}
             />
             <IconButton 
+                event={tageDeductions}
                 color='orange' 
                 name='pricetag-outline'
             />

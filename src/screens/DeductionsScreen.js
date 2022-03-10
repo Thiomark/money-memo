@@ -9,15 +9,18 @@ import tw from 'tailwind-react-native-classnames';
 import AddDeductionButton from '../components/AddDeductionButton';
 import SelectDeduction from '../components/SelectDeduction';
 import { AuthContext } from '../providers/AuthProvider';
+import { formateAmount } from '../utils/helperFunctions';
 
 const DeductionsScreen = ({navigation}) => {
-    const {fetchServerDeductions, deductions, deleteDeduction, fetchSingleDeduction, storedDeductions, addDeduction} = useContext(DeductionContext);
+    const {fetchServerDeductions, deductions, fetchImages, deleteDeduction, fetchSingleDeduction, tagOtherDeductions, storedDeductions, addDeduction} = useContext(DeductionContext);
     const [selectedDeductions, setSelectedDeductions] = useState([]);
     const { params } = useRoute();
+    const [isFetching, setIsFetching] = useState(false);
     const {user} = useContext(AuthContext)
 
     useEffect(() => {
         fetchServerDeductions(params.id);
+        fetchImages(params.id);
     }, []);
     
     return (
@@ -25,6 +28,10 @@ const DeductionsScreen = ({navigation}) => {
             {selectedDeductions.length > 0 && (
                 <SelectDeduction 
                     selectedDeductions={selectedDeductions}
+                    tageDeductions={() => {
+                        setSelectedDeductions([]);
+                        tagOtherDeductions(storedDeductions.filter(x => x.id === selectedDeductions[0])[0])
+                    }}
                     upload={() => {
                         setSelectedDeductions([]);
                         if(!user) return navigation.navigate('Auth');
@@ -33,7 +40,7 @@ const DeductionsScreen = ({navigation}) => {
                     canUpload={selectedDeductions.length === 1 && storedDeductions.filter(x => x.id === selectedDeductions[0])[0].sign}
                     cancelEvent={() => setSelectedDeductions([])}
                     deleteEvent={() => {
-                        deleteDeduction(params.id, selectedDeductions[0]);
+                        deleteDeduction(params.id, selectedDeductions[0], storedDeductions.find(x => x.id === selectedDeductions[0])?.image);
                         setSelectedDeductions([]);
                     }}
                     editEvent={() => {
@@ -56,6 +63,9 @@ const DeductionsScreen = ({navigation}) => {
                 ) : (
                     <View style={tw`flex-1`}>
                         <SectionList 
+                            isFetching={isFetching}
+                            onRefresh={() => fetchServerDeductions(params.id)} 
+                            refreshing={isFetching}
                             sections={deductions} 
                             style={tw`flex-1 h-full`}
                             keyExtractor={(item, index) => index}
@@ -64,6 +74,7 @@ const DeductionsScreen = ({navigation}) => {
                             )}
                             renderItem={({item}) => (
                                 <DeductionCardComponent
+                                    navigation={navigation}
                                     viewDeduction={() => {
                                         fetchSingleDeduction(item.id);
                                         navigation.navigate('SummaryScreen', {summary: `R ${item.amount < 0 ? -item.amount : item.amount}`})
@@ -81,6 +92,10 @@ const DeductionsScreen = ({navigation}) => {
                     </View>
                 )
             }
+            <View style={[tw`p-4 w-full`, {backgroundColor: '#313238', borderTopRightRadius: 0, borderTopLeftRadius: 0}]}>
+                <Text style={[tw`text-gray-50 font-bold`, {fontSize: 17}]}>Deducted Amount</Text>
+                <Text style={[tw`text-gray-50 font-bold pb-2 text-red-500`, {fontSize: 14}]}>{formateAmount(storedDeductions.reduce((a, b) => b.amount + a, 0) < 0 ? -storedDeductions.reduce((a, b) => b.amount + a, 0) : storedDeductions.reduce((a, b) => b.amount + a, 0))}</Text>
+            </View>
             <AddDeductionButton event={() => {
                 navigation.navigate('AddAmountScreen', {type: 'deductAmount', budgetsID: params.id})
             }}/>

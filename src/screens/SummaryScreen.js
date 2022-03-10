@@ -29,7 +29,7 @@ const SummaryScreen = ({navigation}) => {
                                 </TouchableOpacity>
                             )} */}
                             <View style={tw`pb-2 px-2`}>
-                                <Text style={tw`font-bold text-lg text-gray-100`}>{deduction.amount > 0 ? 'Added amount' : 'Removed amount'}</Text>
+                                <Text style={tw`font-bold text-lg text-gray-100`}>Amount</Text>
                                 <Text style={tw`text-gray-300`}>R {deduction.amount < 0 ? -deduction.amount : deduction.amount}</Text>
                             </View>
                             <View style={tw`pb-2 px-2`}>
