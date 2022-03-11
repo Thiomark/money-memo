@@ -21,6 +21,7 @@ const AddAmountScreen = ({navigation}) => {
         const currentDate = selectedDate || date;
         setShow(Platform.OS === 'ios');
         setDate(currentDate);
+        console.log(new Date(currentDate).toISOString())
         setCreatedOn(currentDate);
     };
     
@@ -43,13 +44,15 @@ const AddAmountScreen = ({navigation}) => {
 
     useEffect(() => {
         if(params?.edit){
-            const {amount: amt} = params.edit
-            setDescription(params.edit.description);
-            setTags(params.edit.tags);
-            setImage(params.edit.image)
-            setAmount((-amt).toString());
-            setDate(new Date(params.edit.created_on));
-            setCreatedOn(new Date (params.edit.created_on));
+            if(params.type === 'deductAmount'){
+                const {amount: amt} = params.edit
+                setDescription(params.edit.description);
+                setTags(params.edit.tags);
+                setImage(params.edit.image)
+                setAmount((-amt).toString());
+                setDate(new Date(params.edit.created_on));
+                setCreatedOn(new Date (params.edit.created_on));
+            }
         }
 
         return () => {

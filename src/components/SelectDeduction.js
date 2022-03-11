@@ -18,7 +18,7 @@ const IconButton = ({name, size = 25, color='white', event}) => {
 
 const SelectDeduction = ({deleteEvent, cancelEvent, selectedDeductions, editEvent, upload, canUpload, tageDeductions}) => {
     return (
-        <View style={[tw`max-h-16 -mt-2 flex-1 flex items-center justify-between px-3 flex-row`, {backgroundColor: '#212121'}]}>
+        <View style={[tw`max-h-16 flex-1 flex items-center justify-between px-3 flex-row`, {backgroundColor: '#212121'}]}>
             <IconButton 
                 event={cancelEvent} 
                 name='close-outline' 

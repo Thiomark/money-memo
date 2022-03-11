@@ -7,6 +7,7 @@ export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
+    const [isSubmitting, setIsSubmitting] = useState(false)
 
     useEffect(() => {
         AsyncStorage.getItem('user').then(x => {
@@ -19,13 +20,33 @@ export const AuthProvider = ({ children }) => {
     
     
     const login = (credentials) => {
+        setIsSubmitting(true);
         axiosInterceptor.post(`/users/login`, credentials)
             .then(({data}) => {
                 setUser(data);
                 AsyncStorage.setItem('user', JSON.stringify(data));
             })
             .catch((error) => {
-                ToastAndroid.showWithGravityAndOffset(error?.response?.data?.message || error, ToastAndroid.LONG, ToastAndroid.TOP, 0, 50);
+                ToastAndroid.showWithGravityAndOffset(error?.response?.data?.message || error.message, ToastAndroid.LONG, ToastAndroid.TOP, 0, 50);
+            })
+            .finally(() => {
+                setIsSubmitting(false);
+            })
+    }
+
+    const register = (credentials) => {
+        return;
+        setIsSubmitting(true);
+        axiosInterceptor.post(`/users/register`, credentials)
+            .then(({data}) => {
+                setUser(data);
+                AsyncStorage.setItem('user', JSON.stringify(data));
+            })
+            .catch((error) => {
+                ToastAndroid.showWithGravityAndOffset(error?.response?.data?.message || error.message, ToastAndroid.LONG, ToastAndroid.TOP, 0, 50);
+            })
+            .finally(() => {
+                setIsSubmitting(false);
             })
     }
 
@@ -34,12 +55,8 @@ export const AuthProvider = ({ children }) => {
         await AsyncStorage.removeItem('user');
     }
 
-    const register = () => {
-        //console.log('sddss');
-    }
-
     return (
-        <AuthContext.Provider value={{user, login, register, logout}}>
+        <AuthContext.Provider value={{user, isSubmitting, login, register, logout}}>
             { children }
         </AuthContext.Provider>
     );

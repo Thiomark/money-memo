@@ -15,6 +15,7 @@ const AddAmountScreen = ({}) => {
             <SafeAreaView style={tw`p-2 flex-1`}>
                 <View style={tw`flex-1`}>
                     <TextInput
+                        autoCapitalize='none'
                         style={[tw`rounded bg-gray-400 mb-1 text-black p-3`]}
                         onChangeText={setUser}
                         placeholder="Enter the user's username"

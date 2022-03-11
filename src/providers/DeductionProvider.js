@@ -59,14 +59,14 @@ export const DeductionProvider = ({children}) => {
                 });
             })
             .finally(() => {
-                console.log(firestoreImages)
+                //! do something
             })
     }
 
-    const fetchLocalDeductions = (id, arrayOfDeductions) => {
+    const fetchLocalDeductions = (budgets_id, arrayOfDeductions, sortBy = 'created_on') => {
         const selectedArray = arrayOfDeductions ? arrayOfDeductions : storedDeductions;
-        const localDeductions = selectedArray.filter(x => x.budgets_id === id);
-        const structedDeductions = groupItems(localDeductions, 'created_on');
+        const localDeductions = selectedArray.filter(x => x.budgets_id === budgets_id);
+        const structedDeductions = groupItems(localDeductions, sortBy);
         setDeductions(structedDeductions);
     }
 

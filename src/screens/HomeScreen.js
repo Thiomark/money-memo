@@ -8,6 +8,7 @@ import { BudgetContext } from '../providers/BudgetProvider';
 import { DeductionContext } from '../providers/DeductionProvider';
 import { AuthContext } from '../providers/AuthProvider';
 import AddDeductionButton from '../components/AddDeductionButton';
+import { getBudgetsDeductedAmount } from '../utils/helperFunctions';
 
 const HomeScreen = ({navigation}) => {
     const {fetchBudgets, budgets, deleteBudget, addBudget} = useContext(BudgetContext);
@@ -64,7 +65,10 @@ const HomeScreen = ({navigation}) => {
             <View style={tw`h-full relative`}>
                 <SectionList 
                     isFetching={isFetching}
-                    onRefresh={fetchBudgets}
+                    onRefresh={() => { 
+                        fetchBudgets();
+                        setIsFetching(false);
+                    }}
                     refreshing={isFetching}
                     sections={budgets}
                     keyExtractor={(item, index) => index.toString()}
@@ -99,7 +103,7 @@ const HomeScreen = ({navigation}) => {
                                     
                                     {
                                         storedDeductions.filter(bg => bg.budgets_id === item.id).reduce((a, b) => b.amount + a, 0) < 0 && (
-                                            <Text style={tw`text-red-500 text-xs font-bold`}>{formateAmount(storedDeductions.filter(bg => bg.budgets_id === item.id).reduce((a, b) => b.amount + a, 0))}</Text>
+                                            <Text style={tw`text-red-500 text-xs font-bold`}>{getBudgetsDeductedAmount(storedDeductions, item.id, false)}</Text>
                                         )
                                     }
                                 </View>
