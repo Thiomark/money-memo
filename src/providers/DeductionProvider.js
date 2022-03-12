@@ -46,21 +46,21 @@ export const DeductionProvider = ({children}) => {
     }
 
     const fetchImages = (id) => {
-        const storage = getStorage();
-        const listRef = ref(storage, `budgets/${id}`);
+        // const storage = getStorage();
+        // const listRef = ref(storage, `budgets/${id}`);
 
-        listAll(listRef)
-            .then((res) => {
-                res.items.forEach((itemRef) => {
-                    getDownloadURL(ref(storage, `budgets/${id}/${itemRef.name}`))
-                        .then((url) => {
-                            setFirestoreImages(prev => [...prev, {url, name: itemRef.name}])
-                        })
-                });
-            })
-            .finally(() => {
-                //! do something
-            })
+        // listAll(listRef)
+        //     .then((res) => {
+        //         res.items.forEach((itemRef) => {
+        //             getDownloadURL(ref(storage, `budgets/${id}/${itemRef.name}`))
+        //                 .then((url) => {
+        //                     setFirestoreImages(prev => [...prev, {url, name: itemRef.name}])
+        //                 })
+        //         });
+        //     })
+        //     .finally(() => {
+        //         //! do something
+        //     })
     }
 
     const fetchLocalDeductions = (budgets_id, arrayOfDeductions, sortBy = 'created_on') => {
