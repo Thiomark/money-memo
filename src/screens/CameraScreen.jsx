@@ -9,7 +9,7 @@ import { DeductionContext } from '../providers/DeductionProvider';
 
 const CameraScreen = ({navigation}) => {
     const cameraRef = useRef(null);
-    const {setImage, image} = useContext(DeductionContext)
+    const {setImage, image} = useContext(DeductionContext);
 
     const pickImage = async () => {
         try {
@@ -21,8 +21,8 @@ const CameraScreen = ({navigation}) => {
             });
     
             if (!result.cancelled) {
-                console.log(result.uri)
-                setImage(result.uri)
+                setImage(result.uri);
+                navigation.goBack();
             }
         } catch (e) {}
     };
@@ -36,6 +36,7 @@ const CameraScreen = ({navigation}) => {
                     quality:1,
                 });
                 setImage(photo.uri);
+                navigation.goBack();
             }
             catch (e) { }
         }

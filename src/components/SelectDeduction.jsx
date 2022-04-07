@@ -26,8 +26,7 @@ const SelectDeduction = ({deleteEvent, cancelEvent, selectedDeductions, editEven
             />
             <IconButton 
                 event={tageDeductions}
-                color='orange' 
-                name='pricetag-outline'
+                name='archive-outline'
             />
             {selectedDeductions.length === 1 && (
                 <IconButton 

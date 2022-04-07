@@ -1,6 +1,5 @@
-import { Text, View, TouchableOpacity, SectionList, Alert } from 'react-native';
+import { Text, View, SectionList, TextInput, TouchableOpacity } from 'react-native';
 import React, { useContext, useEffect, useState } from 'react';
-import { format } from 'date-fns';
 import { useRoute } from '@react-navigation/native';
 import Container from '../shared/Container';
 import { DeductionContext } from '../providers/DeductionProvider';
@@ -9,38 +8,67 @@ import tw from 'tailwind-react-native-classnames';
 import AddDeductionButton from '../components/AddDeductionButton';
 import SelectDeduction from '../components/SelectDeduction';
 import { AuthContext } from '../providers/AuthProvider';
-import { formateAmount, getBudgetsDeductedAmount } from '../utils/helperFunctions';
+import { getBudgetsDeductedAmount } from '../utils/helperFunctions';
 import SortItems from '../components/SortItems';
+import {colors} from '../utils/colors'
+import { Icon } from 'react-native-elements';
 
 const DeductionsScreen = ({navigation}) => {
-    const {fetchServerDeductions, deductions, fetchImages, fetchLocalDeductions, deleteDeduction, fetchSingleDeduction, tagOtherDeductions, storedDeductions, addDeduction} = useContext(DeductionContext);
+    const {fetchServerDeductions, deductions, sortByDate, controlSortBy, deleteDeduction, fetchSingleDeduction, fetchLocalDeductions, archiveDeductions, storedDeductions, addDeduction} = useContext(DeductionContext);
     const [selectedDeductions, setSelectedDeductions] = useState([]);
     const { params } = useRoute();
     const [isFetching, setIsFetching] = useState(false);
+    const [filterResults, setFilterResults] = useState(false);
     const {user} = useContext(AuthContext);
-    const [sortByDate, setSortByDate] = useState(false)
 
     useEffect(() => {
         fetchServerDeductions(params.id);
-        fetchImages(params.id);
     }, []);
-
-    useEffect(() => {
-        fetchLocalDeductions(params.id, storedDeductions, sortByDate ? 'created_on': 'tags')
-    }, [sortByDate])
     
     return (
         <Container sides={0} topPadding={1}>
-            <SortItems sortEvent={() => {
-                return;
-                setSortByDate(prev => !prev)
-            }}/>
+            {filterResults && (
+                <View style={[tw`flex flex-row border-2 w-full h-12`, {borderColor: colors.cardBackgroundColor, backgroundColor: colors.cardBackgroundColor}]}>
+                    <TextInput
+                        autoCapitalize='none'
+                        style={[tw`rounded px-4 bg-black text-gray-50 flex-1`]}
+                        placeholder='search...'
+                        onChangeText={text => {
+                            fetchLocalDeductions(params.id, storedDeductions.filter(deduct => {
+                                const regex = new RegExp(`${text}`, 'gi');
+                                return deduct?.tags?.match(regex) || deduct?.description?.match(regex) || deduct?.amount.toString()?.match(regex);
+                            }));
+                        }}
+                    />
+                    <TouchableOpacity 
+                        onPress={() => {
+                            fetchLocalDeductions(params.id, storedDeductions)
+                            setFilterResults(false)
+                        }}
+                        style={[tw`flex ml-1 h-full w-16 items-center justify-center rounded`]}>
+                        <Icon 
+                            type='ionicon'
+                            size={25}
+                            name='close-outline'
+                            color='white'
+                        />
+                    </TouchableOpacity>
+                </View>
+            )}
+            {
+                deductions.length > 0 && !filterResults && (
+                    <SortItems 
+                        filterResults={() => setFilterResults(true)}
+                        itemsCount={storedDeductions.filter(x => x.budgets_id === params.id).length} 
+                        sortEvent={(() => controlSortBy(params.id))}
+                    />)
+            }
             {selectedDeductions.length > 0 && (
                 <SelectDeduction 
                     selectedDeductions={selectedDeductions}
                     tageDeductions={() => {
                         setSelectedDeductions([]);
-                        tagOtherDeductions(storedDeductions.filter(x => x.id === selectedDeductions[0])[0])
+                        //archiveDeductions(params.id, selectedDeductions, true);
                     }}
                     upload={() => {
                         setSelectedDeductions([]);
@@ -79,12 +107,23 @@ const DeductionsScreen = ({navigation}) => {
                             sections={deductions} 
                             style={tw`flex-1 h-full`}
                             keyExtractor={(item, index) => index}
-                            renderSectionHeader={({ section: { group } }) => (
-                                <Text style={tw`text-gray-300 pl-2 font-bold pb-2 pt-4 uppercase text-xs`}>{sortByDate ?  group : group}</Text>
-                            )}
+                            renderSectionHeader={({ section: { group, formatedDate } }) => {
+                                return (
+                                    <View style={tw`px-2`}>
+                                        {sortByDate && formatedDate ? 
+                                        (<View style={tw`flex flex-row items-center justify-between`}>
+                                            <Text style={tw`text-gray-300 font-bold pb-2 pt-4 uppercase text-xs`}>{formatedDate?.distance}</Text>
+                                            <Text style={tw`text-gray-300 font-bold pb-2 pt-4 uppercase text-xs`}>{formatedDate?.date}</Text>
+                                        </View>) : (
+                                            group === 'null' ? <View style={tw`mt-4`}/> :
+                                                <Text style={tw`text-gray-300 font-bold pb-2 pt-4 uppercase text-xs`}>{group}</Text>
+                                        )}
+                                    </View>
+                                )
+                            }}
                             renderItem={({item}) => (
                                 <DeductionCardComponent
-                                    sortByDate={sortByDate}
+                                    sortByDate={sortByDate ? false : true}
                                     navigation={navigation}
                                     viewDeduction={() => {
                                         fetchSingleDeduction(item.id);
@@ -103,10 +142,12 @@ const DeductionsScreen = ({navigation}) => {
                     </View>
                 )
             }
-            <View style={[tw`p-4 w-full`, {backgroundColor: '#313238', borderTopRightRadius: 0, borderTopLeftRadius: 0}]}>
-                <Text style={[tw`text-gray-50 font-bold`, {fontSize: 17}]}>Deducted Amount</Text>
-                <Text style={[tw`text-gray-50 font-bold pb-2 text-red-500`, {fontSize: 14}]}>{getBudgetsDeductedAmount(storedDeductions, params.id)}</Text>
-            </View>
+            {deductions.length > 0 && (
+                <View style={[tw`p-4 w-full`, {backgroundColor: '#313238', borderTopRightRadius: 0, borderTopLeftRadius: 0}]}>
+                    <Text style={[tw`text-gray-50 font-bold`, {fontSize: 17}]}>Deducted Amount</Text>
+                    <Text style={[tw`text-gray-50 font-bold pb-2 text-red-500`, {fontSize: 14}]}>{getBudgetsDeductedAmount(storedDeductions, params.id)}</Text>
+                </View>
+            )}
             <AddDeductionButton event={() => {
                 navigation.navigate('AddAmountScreen', {type: 'deductAmount', budgetsID: params.id})
             }}/>

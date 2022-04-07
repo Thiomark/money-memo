@@ -1,17 +1,10 @@
-import { View, Text, TouchableOpacity, Image } from 'react-native'
-import React, { useContext, useEffect } from 'react'
-import tw from 'tailwind-react-native-classnames'
-import { Icon } from 'react-native-elements'
-import { DeductionContext } from '../providers/DeductionProvider'
+import { View, Text, TouchableOpacity, Image } from 'react-native';
+import tw from 'tailwind-react-native-classnames';
+import { Icon } from 'react-native-elements';
+import {formateAmount} from '../utils/helperFunctions';
+import { formatDistanceToNow } from 'date-fns'
 
 const DeductionCardComponent = ({item, isSelected, pressAndHold, viewDeduction, areDeductionsSelected, removeDeduction, navigation, sortByDate}) => {
-    const {firestoreImages} = useContext(DeductionContext);
-
-    const returnImage = (image) => {
-        const xr = firestoreImages.find(xx => xx.name === image);
-        if(xr) return xr.url
-        return false
-    }
     
     return (
         <TouchableOpacity 
@@ -44,7 +37,7 @@ const DeductionCardComponent = ({item, isSelected, pressAndHold, viewDeduction, 
                         <View style={tw`flex flex-row items-center mb-2`}>
                             
                             <View style={tw`flex items-center flex-row`}>
-                                <Text style={tw`font-bold ${item.amount > 0 ? 'text-green-500' : 'text-red-400'}`}>R {item.amount}</Text>
+                                <Text style={tw`font-bold ${item.amount > 0 ? 'text-green-500' : 'text-red-400'}`}>{formateAmount(item.amount)}</Text>
                                 {
                                     item.sign && (
                                         <View style={tw`h-2 w-2 ml-2 rounded-full bg-yellow-500`}/>
@@ -52,21 +45,23 @@ const DeductionCardComponent = ({item, isSelected, pressAndHold, viewDeduction, 
                                 }
                             </View>
                             {
-                                item.tags && sortByDate && (
+                                !sortByDate && item.tags ? (
                                     <View style={tw`px-2 ml-4 py-0.5 rounded-full bg-black border border-yellow-400 flex items-center justify-center`}>
                                         <Text style={tw`font-semibold text-gray-50 text-xs`}>{item.tags}</Text>
                                     </View>
+                                ) : (
+                                    <Text style={tw`font-bold text-gray-400 text-xs ml-3 uppercase`}>{formatDistanceToNow(new Date(item.created_on), {addSuffix: true})}</Text>
                                 )
                             }
                         </View>
                         {item.description && <Text style={tw`text-gray-300 text-xs`}>{item.description}</Text>}
                     </View>
-                    {returnImage(item.image) && (
+                    {item?.image && (
                         <TouchableOpacity 
-                            onPress={() => navigation.navigate('ImageScreen', { image: returnImage(item.image) })}
+                            onPress={() => navigation.navigate('ImageScreen', { image: item.image })}
                             style={tw`h-10 w-10 ml-2 rounded border border-gray-500`}
                         >
-                            <Image source={{ uri: returnImage(item.image) }} style={[tw`flex-1 w-full rounded `, { width: '100%', height: '100%' }]} />
+                            <Image source={{ uri: item.image }} style={[tw`flex-1 w-full rounded `, { width: '100%', height: '100%' }]} />
                         </TouchableOpacity>
                     )}
                 </View>

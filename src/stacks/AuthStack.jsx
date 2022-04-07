@@ -52,8 +52,6 @@ const SubmitSection = ({navigate, credentials}) => {
     )
 }
 
-//disabled={isSubmitting && !credentials?.email && !credentials?.password && (route.name === 'Register' && !credentials?.name)}
-
 
 const Auth = ({ navigation }) => {
 
@@ -87,7 +85,7 @@ const Auth = ({ navigation }) => {
                     <TextInput
                         autoCapitalize='none'
                         style={[style.input, tw`${inputStyle('mb-3')}`]}
-                        placeholder='Phone, email or username'
+                        placeholder={route.name === 'Login' ? 'Phone, email or username' : 'Email'}
                         onChangeText={text => setEmail(text.trim())}
                         placeholderTextColor={style.foreGround.color} 
                     />

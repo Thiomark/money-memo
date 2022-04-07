@@ -16,6 +16,7 @@ const AddAmountScreen = ({navigation}) => {
     const [created_on, setCreatedOn] = useState(Date.now());
     const [mode, setMode] = useState('date');
     const [show, setShow] = useState(false);
+    const [isAmountPostive, setIsAmountPostive] = useState(false);
 
     const onChange = (event, selectedDate) => {
         const currentDate = selectedDate || date;
@@ -39,20 +40,25 @@ const AddAmountScreen = ({navigation}) => {
     const [description, setDescription] = useState(null);
     const [tags, setTags] = useState(null);
 
-    const {addBudget} = useContext(BudgetContext);
+    const {addBudget, editBudget} = useContext(BudgetContext);
     const {addDeduction, editDeduction, image, setImage} = useContext(DeductionContext);
 
     useEffect(() => {
         if(params?.edit){
+            let amt;
             if(params.type === 'deductAmount'){
-                const {amount: amt} = params.edit
-                setDescription(params.edit.description);
+                const temNumber = Number(params.edit.amount) 
+                amt = temNumber > 0 ? temNumber : -temNumber;
+                setIsAmountPostive(temNumber > 0 ? true : false);
+
                 setTags(params.edit.tags);
-                setImage(params.edit.image)
-                setAmount((-amt).toString());
-                setDate(new Date(params.edit.created_on));
-                setCreatedOn(new Date (params.edit.created_on));
+            }else {
+                amt = params.edit.budget;
             }
+            setAmount((amt).toString());
+            setDescription(params.edit.description);
+            setCreatedOn(new Date (params.edit.created_on));
+            setDate(new Date(params.edit.created_on));
         }
 
         return () => {
@@ -73,15 +79,15 @@ const AddAmountScreen = ({navigation}) => {
                                 }}
                                 style={tw`bg-gray-400 h-16 border-2 border-gray-400 w-20 flex items-center justify-center rounded`}>
                                 {
-                                    !image ? (
+                                    image || params?.edit?.image ? (
+                                        <Image source={{ uri: image || params?.edit?.image }} style={[tw`flex-1 w-full`, { width: '100%', height: '100%' }]} />
+                                    ) : (
                                         <Icon 
                                             size={40}
                                             color='black'
                                             type='ionicon'
                                             name='image-outline'                                
                                         />
-                                    ) : (
-                                        <Image source={{ uri: image }} style={[tw`flex-1 w-full`, { width: '100%', height: '100%' }]} />
                                     )
                                 }
                             </TouchableOpacity>
@@ -89,32 +95,40 @@ const AddAmountScreen = ({navigation}) => {
                                 {!image && <Text style={tw`font-bold uppercase text-xs text-gray-50`}>no image selected</Text>}
                             </View>
                         </View>
-                     }
-                    <TextInput
-                        style={[tw`rounded bg-gray-400 mb-1 text-black p-3`]}
-                        onChangeText={setAmount}
-                        value={amount}
-                        placeholder='Enter amount'
-                        keyboardType="numeric"
-                    />
+                    }
+                    <View style={tw`flex flex-row mb-1`}>
+                        <TextInput
+                            style={[tw`rounded bg-gray-400 flex-1 text-black p-3`]}
+                            onChangeText={setAmount}
+                            value={amount}
+                            placeholder='Enter amount'
+                            keyboardType="numeric"
+                        />
+                        {params.type === 'deductAmount' &&
+                            <TouchableOpacity 
+                                onPress={() => setIsAmountPostive(prev => !prev)}
+                                style={tw`w-14 rounded ${!isAmountPostive ? 'bg-red-400' : 'bg-green-400'} flex items-center justify-center ml-1`}>
+                                <Text style={tw`text-3xl`}>{isAmountPostive ? '+' : '-'}</Text>
+                            </TouchableOpacity>
+                        }
+                        
+                    </View>
                     {params.type === 'deductAmount' && (
-                        <View>
-                            <TextInput
-                                style={[tw`rounded bg-gray-400 mb-1 text-black p-3`]}
-                                onChangeText={setTags}
-                                value={tags}
-                                placeholder="tags"
-                            />
-                            <TextInput
-                                style={[{ height:200, textAlignVertical: 'top'}, tw`rounded text-black mb-1 bg-gray-400 p-3`]}
-                                multiline={true}
-                                value={description}
-                                numberOfLines={4}
-                                onChangeText={setDescription}
-                                placeholder="Amount description"
-                            />
-                        </View>
+                        <TextInput
+                            style={[tw`rounded bg-gray-400 mb-1 text-black p-3`]}
+                            onChangeText={setTags}
+                            value={tags}
+                            placeholder="tags"
+                        />
                     )}
+                    <TextInput
+                        style={[{ height:200, textAlignVertical: 'top'}, tw`rounded text-black mb-1 bg-gray-400 p-3`]}
+                        multiline={true}
+                        value={description}
+                        numberOfLines={4}
+                        onChangeText={setDescription}
+                        placeholder="Amount description"
+                    />
                     <View>
                         <View style={tw`flex flex-row`}>
                             <TouchableOpacity style={tw`${btn} ${image && 'mr-0.5'}`} onPress={showDatepicker}>
@@ -154,7 +168,7 @@ const AddAmountScreen = ({navigation}) => {
                         if(params.type === 'deductAmount'){
                             if(Number(amount)){
                                 addDeduction({
-                                    amount: -Number(amount),
+                                    amount: isAmountPostive ? Number(amount) : -Number(amount),
                                     description,
                                     tags,
                                     created_on,
@@ -166,6 +180,7 @@ const AddAmountScreen = ({navigation}) => {
                             if(Number(amount)){
                                 addBudget({
                                     budget: Number(amount),
+                                    description,
                                     created_on
                                 })
                             }
@@ -182,7 +197,7 @@ const AddAmountScreen = ({navigation}) => {
                             onPress={() => {
                                 if(params.type === 'deductAmount'){
                                     editDeduction(params.edit.budgets_id, params.edit.id, {
-                                        amount: -Number(amount),
+                                        amount: isAmountPostive ? Number(amount) : -Number(amount),
                                         budgets_id: params.edit.budgets_id,
                                         image: params.edit.image,
                                         description,
@@ -191,12 +206,17 @@ const AddAmountScreen = ({navigation}) => {
                                         id: params.edit.id,
                                     })
                                 }else{
-                                    //! editing the budget amount add later
+                                    editBudget(params.edit.id, {
+                                        budget: Number(amount),
+                                        description,
+                                        created_on,
+                                        id: params.edit.id,
+                                    })
                                 }
                                 setTags(null);
                                 setDescription(null);
                                 setAmount(null);
-                                navigation.navigate('Deductions', {id: params.edit.id});
+                                navigation.goBack()
                             }}
                             style={[{backgroundColor: '#313238'}, tw`h-12 flex flex-row items-center justify-center rounded-lg`]}>
                             <Icon 

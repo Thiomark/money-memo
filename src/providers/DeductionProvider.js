@@ -5,9 +5,8 @@ import axiosInterceptor from '../utils/axiosInterceptor';
 import { ToastAndroid } from 'react-native';
 import { AuthContext } from './AuthProvider'
 import { BudgetContext } from './BudgetProvider';
-import {getStorage, ref, uploadBytes, deleteObject, listAll, getDownloadURL} from 'firebase/storage';
 import { createDeduction } from '../utils/helperFunctions'
-import {url} from '../utils/helperFunctions'
+import {url} from '../utils/helperFunctions';
 
 export const DeductionContext = createContext();
 
@@ -18,7 +17,7 @@ export const DeductionProvider = ({children}) => {
     const [image, setImage] = useState(null);
     const {user} = useContext(AuthContext);
     const {fetchBudgets} = useContext(BudgetContext);
-    const [firestoreImages, setFirestoreImages] = useState([]);
+    const [sortByDate, setSortByDate] = useState(false);
 
     useEffect(() => {
         AsyncStorage.getItem('deductions')
@@ -30,40 +29,50 @@ export const DeductionProvider = ({children}) => {
             });
     }, []);
 
+    const controlSortBy = (budgetID) => {
+        setSortByDate(prev => {
+            const newValue = !prev
+            fetchLocalDeductions(budgetID, null, newValue ? 'created_on' : 'tags')
+            return newValue
+        });
+        
+    }
+
+    const sortBy = () => sortByDate ? 'created_on' :'tags'
+
     useEffect(() => {
         AsyncStorage.setItem('deductions', JSON.stringify(storedDeductions));
     }, [storedDeductions]);
 
+    const removeAllDeductions = () => {
+        setStoredDeductions([]);
+        setDeductions([]);
+    }
 
     const fetchServerDeductions = (id) => {
         if(!user) return;
         axiosInterceptor.get(`/deductions/${id}`)
             .then(({data}) => {
-                const updatedArray = storedDeductions.filter(x => x.sign || x.budgets_id !== id);
-                const updatedDeductions = [...data, ...updatedArray];
-                setStoredDeductions(updatedDeductions);
-            });
+                const locallySavedDeductions = storedDeductions.filter(x => x.sign === 'temp' && x.budgets_id === id);
+                const updatedArray = storedDeductions.filter(x => x.budgets_id !== id)
+                const allDeductions = [...data, ...updatedArray, ...locallySavedDeductions];
+                setStoredDeductions([...allDeductions]);
+                if(deductions.length !== 0) return;
+
+                const structedDeductions = groupItems([...locallySavedDeductions, ...data], sortBy());
+                setDeductions(structedDeductions);
+            })
+            .catch(error => {
+                const messageToShow = error?.response?.data.message ? error.response.data.message : error?.message ? error.message : 'failed refrehsing'
+                ToastAndroid.showWithGravityAndOffset(messageToShow, ToastAndroid.LONG, ToastAndroid.BOTTOM, 0, 50);
+            })
     }
 
-    const fetchImages = (id) => {
-        // const storage = getStorage();
-        // const listRef = ref(storage, `budgets/${id}`);
-
-        // listAll(listRef)
-        //     .then((res) => {
-        //         res.items.forEach((itemRef) => {
-        //             getDownloadURL(ref(storage, `budgets/${id}/${itemRef.name}`))
-        //                 .then((url) => {
-        //                     setFirestoreImages(prev => [...prev, {url, name: itemRef.name}])
-        //                 })
-        //         });
-        //     })
-        //     .finally(() => {
-        //         //! do something
-        //     })
+    const deleteBudgetDeductions = (id) => {
+        setStoredDeductions(prev => prev.filter(x => x.budgets_id !== id));
     }
 
-    const fetchLocalDeductions = (budgets_id, arrayOfDeductions, sortBy = 'created_on') => {
+    const fetchLocalDeductions = (budgets_id, arrayOfDeductions, sortBy = sortByDate ? 'created_on' : 'tags') => {
         const selectedArray = arrayOfDeductions ? arrayOfDeductions : storedDeductions;
         const localDeductions = selectedArray.filter(x => x.budgets_id === budgets_id);
         const structedDeductions = groupItems(localDeductions, sortBy);
@@ -71,12 +80,12 @@ export const DeductionProvider = ({children}) => {
     }
 
     const fetchSingleDeduction = (id) => {
-        const [singleDeduction] = storedDeductions.filter(x => x.id !== id);
+        const [singleDeduction] = storedDeductions.filter(x => x.id === id);
         setDeduction(singleDeduction);
     }
 
     const addDeduction = async (deduction, id, retry = false) => {
-
+        
         const newDeduction = createDeduction(deduction);
 
         if(!retry){
@@ -92,15 +101,22 @@ export const DeductionProvider = ({children}) => {
 
         let imageName = null;
 
-        if(deduction.image && user){
+        if(deduction.image){
             try {
                 imageName = `budget-img-${Date.now()}-${deduction.amount}`
-                const storage = getStorage();
-                const reff = ref(storage, `budgets/${id}/${imageName}`);
-                const img = await fetch(deduction.image);
-                const bytes = await img.blob();
-                console.log(bytes);
-                await uploadBytes(reff, bytes);
+                
+                const formData = new FormData();
+
+                formData.append('featuredImage', {
+                    name: imageName,
+                    uri: deduction.image,
+                    type: 'image/jpg',
+                });
+
+                await fetch(url + '/deductions/image/' + id, {
+                    method: 'POST',
+                    body: formData,
+                })
             } catch (error) {
                 imageName = null;
                 ToastAndroid.showWithGravityAndOffset('Image not saved', ToastAndroid.LONG, ToastAndroid.BOTTOM, 0, 50);
@@ -109,7 +125,7 @@ export const DeductionProvider = ({children}) => {
 
         deduction.image = imageName;
 
-        axiosInterceptor.post(`/deductions/${id}`, deduction)
+        await axiosInterceptor.post(`/deductions/${id}`, deduction)
             .then(({data}) => {
                 setStoredDeductions(prev => {
                     let updatedDeductions = prev
@@ -130,11 +146,38 @@ export const DeductionProvider = ({children}) => {
         fetchBudgets();
     }
 
-    const editDeduction = (budgets_id, deduction_id, editedDeduction) => {
+    const editDeduction = async (budgets_id, deduction_id, editedDeduction) => {
         const tempDeductions = deductions;
         fetchLocalDeductions(budgets_id, storedDeductions.map(x => x.id === deduction_id ? {...editedDeduction, created_on: new Date(editedDeduction.created_on).toISOString()} : x))
 
-        axiosInterceptor.post(`/deductions/${budgets_id}/${deduction_id}`, editedDeduction)
+        if(!user) return;
+        // if(editedDeduction.image){
+        //     let imageName = null;
+
+        //     if(editedDeduction.image){
+        //         try {
+        //             imageName = `budget-img-${Date.now()}-${editedDeduction.amount}`
+                    
+        //             const formData = new FormData();
+
+        //             formData.append('featuredImage', {
+        //                 name: imageName,
+        //                 uri: editedDeduction.image,
+        //                 type: 'image/jpg',
+        //             });
+
+        //             await fetch(url + '/deductions/image/' + id, {
+        //                 method: 'POST',
+        //                 body: formData,
+        //             })
+        //             editedDeduction.image = imageName;
+        //         } catch (error) {
+        //             ToastAndroid.showWithGravityAndOffset('Image not updated', ToastAndroid.LONG, ToastAndroid.BOTTOM, 0, 50);
+        //         }
+        //     }
+        // }
+
+        await axiosInterceptor.post(`/deductions/${budgets_id}/${deduction_id}`, editedDeduction)
             .then(({data})=> {
                 setStoredDeductions(prev => prev.map(x => x.id === deduction_id ? data : x));
             })
@@ -151,16 +194,6 @@ export const DeductionProvider = ({children}) => {
 
         fetchLocalDeductions(budgetID, storedDeductions.filter(x => x.id !== id));
 
-        try {
-            if(imageUrl && user){
-                const storage = getStorage();
-                const desertRef = ref(storage, `budgets/${id}/${imageUrl}`);
-                await deleteObject(desertRef)
-            }
-        } catch (error) {
-            console.log(error);
-        }
-
         axiosInterceptor.delete(`/deductions/${budgetID}/${id}`)
             .then(() => {
                 setStoredDeductions(prev => prev.filter(x => x.id !== id));
@@ -175,12 +208,12 @@ export const DeductionProvider = ({children}) => {
         fetchBudgets();
     }
 
-    const tagOtherDeductions = (img) => {
+    const archiveDeductions = (budgets_id, selectedDeductions, archive) => {
         
     }
 
     return (
-        <DeductionContext.Provider value={{deductions, setImage, image, storedDeductions, fetchImages, firestoreImages, tagOtherDeductions, fetchServerDeductions, deduction, editDeduction, fetchSingleDeduction, fetchLocalDeductions, addDeduction, deleteDeduction}}>
+        <DeductionContext.Provider value={{deductions, setImage, image, controlSortBy, sortByDate, removeAllDeductions, storedDeductions, deleteBudgetDeductions, archiveDeductions, fetchServerDeductions, deduction, editDeduction, fetchSingleDeduction, fetchLocalDeductions, addDeduction, deleteDeduction}}>
             {children}
         </DeductionContext.Provider>
     )

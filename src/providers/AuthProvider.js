@@ -16,8 +16,7 @@ export const AuthProvider = ({ children }) => {
                 setUser(token)
             }
         })
-    }, [])
-    
+    }, []);
     
     const login = (credentials) => {
         setIsSubmitting(true);
@@ -35,7 +34,6 @@ export const AuthProvider = ({ children }) => {
     }
 
     const register = (credentials) => {
-        return;
         setIsSubmitting(true);
         axiosInterceptor.post(`/users/register`, credentials)
             .then(({data}) => {

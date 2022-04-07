@@ -6,6 +6,7 @@ import SummaryScreen from '../screens/SummaryScreen';
 import ImageScreen from '../screens/ImageScreen';
 import AddAmountScreen from '../screens/AddAmountScreen';
 import AddPeopleScreen from '../screens/AddPeopleScreen'
+import SettingsScreen from '../screens/SettingsScreen'
 import CameraScreen from '../screens/CameraScreen';
 import ImagePickerScreen from '../screens/ImagePickerScreen';
 import { TouchableOpacity, View, Text } from 'react-native';
@@ -38,7 +39,7 @@ const HomeStack = () => {
                     headerTitle: 'Home',
                     headerRight: () => {
                         return (
-                            <View style={tw`flex flex-row`}>
+                            <View style={tw`flex flex-row items-center`}>
                                 {
                                     user ? (
                                         <TouchableOpacity
@@ -54,6 +55,17 @@ const HomeStack = () => {
                                         </TouchableOpacity>
                                     )
                                 }
+                                 <TouchableOpacity
+                                        style={tw`ml-4`}
+                                        onPress={() => navigation.navigate('SettingsScreen')}
+                                    >
+                                        <Icon 
+                                            name='settings-outline'
+                                            type='ionicon'
+                                            color='white'
+                                            size={24}
+                                        />
+                                </TouchableOpacity>
                             </View>
                         )
                     }
@@ -130,6 +142,13 @@ const HomeStack = () => {
                 })}
                 name='AddPeopleScreen' 
                 component={AddPeopleScreen}
+            />
+            <Stack.Screen  
+                options={() => ({
+                    headerTitle: `Settings`,
+                })}
+                name='SettingsScreen' 
+                component={SettingsScreen}
             />
         </Stack.Navigator>
     )
