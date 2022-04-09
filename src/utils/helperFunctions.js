@@ -61,8 +61,9 @@ export const formateAmount = (amount, currency = true) => {
     return `${currency ? 'R ' : ''}` + (Number(amount)).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,')
 }
 
-export const getBudgetsDeductedAmount = (storedDeductions, budgetID, showCuurency = true) => {
-    return formateAmount(storedDeductions.filter(deduction => deduction.budgets_id === budgetID).reduce((a, b) => Number(b.amount) + a, 0), showCuurency);
+export const getBudgetsDeductedAmount = (storedDeductions, budgetID, showCuurency = true, forOnePerson = false, user_id) => {
+    //forOnePerson ? b?.user_id && b?.user_id === user_id && b.amount / b.divide_by : b.amount
+    return formateAmount(storedDeductions.filter(deduction => deduction.budgets_id === budgetID).reduce((a, b) => Number(forOnePerson ? (b.divide_by === 1 ? b?.user_id && b.user_id === user_id ? b.amount : 0 : b.amount / b.divide_by) : b.amount) + a, 0), showCuurency);
 }
 
 // const getRemaingAmount = () => {
@@ -70,7 +71,7 @@ export const getBudgetsDeductedAmount = (storedDeductions, budgetID, showCuurenc
 // }
 
 let baseUrl = 'https://buget-123-new.herokuapp.com/api/v2'
-if(dev) baseUrl = 'http://192.168.0.102:5000/api/v2'
+if(dev) baseUrl = 'http://192.168.0.101:5000/api/v2'
 
 export const url = baseUrl;
 

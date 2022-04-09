@@ -19,6 +19,7 @@ const DeductionsScreen = ({navigation}) => {
     const { params } = useRoute();
     const [isFetching, setIsFetching] = useState(false);
     const [filterResults, setFilterResults] = useState(false);
+    const [forOnePerson, setForOnePerson] = useState(false);
     const {user} = useContext(AuthContext);
 
     useEffect(() => {
@@ -135,6 +136,7 @@ const DeductionsScreen = ({navigation}) => {
                                     isSelected={selectedDeductions.includes(item.id)} 
                                     pressAndHold={() => setSelectedDeductions(prev => [...prev, item.id])} 
                                     item={item}
+                                    belongToUser={item.divide_by === 1 && item.user_id !== user.username && forOnePerson}
                                     areDeductionsSelected={selectedDeductions.length > 0}
                                 />
                             )}
@@ -143,13 +145,15 @@ const DeductionsScreen = ({navigation}) => {
                 )
             }
             {deductions.length > 0 && (
-                <View style={[tw`p-4 w-full`, {backgroundColor: '#313238', borderTopRightRadius: 0, borderTopLeftRadius: 0}]}>
-                    <Text style={[tw`text-gray-50 font-bold`, {fontSize: 17}]}>Deducted Amount</Text>
-                    <Text style={[tw`text-gray-50 font-bold pb-2 text-red-500`, {fontSize: 14}]}>{getBudgetsDeductedAmount(storedDeductions, params.id)}</Text>
-                </View>
+                <TouchableOpacity 
+                    onPress={() => setForOnePerson(prev => !prev)}
+                    style={[tw`p-4 w-full`, {backgroundColor: '#313238', borderTopRightRadius: 0, borderTopLeftRadius: 0}]}>
+                    <Text style={[tw`text-gray-50 font-bold`, {fontSize: 17}]}>{forOnePerson ? 'My Share' : 'Deducted Amount'}</Text>
+                    <Text style={[tw`text-gray-50 font-bold pb-2 text-red-500`, {fontSize: 14}]}>{getBudgetsDeductedAmount(storedDeductions, params.id, true, forOnePerson, user.username)}</Text>
+                </TouchableOpacity>
             )}
             <AddDeductionButton event={() => {
-                navigation.navigate('AddAmountScreen', {type: 'deductAmount', budgetsID: params.id})
+                navigation.navigate('AddAmountScreen', {type: 'deductAmount', budgetsID: params.id, peopleToShareBetween: params.peopleToShareBetween})
             }}/>
         </Container>
     )

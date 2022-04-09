@@ -1,4 +1,4 @@
-import { Text, SafeAreaView, TextInput, TouchableOpacity, View, Image } from 'react-native';
+import { Text, SafeAreaView, TextInput, TouchableOpacity, View, Image, ToastAndroid, ScrollView } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import React, {useContext, useEffect, useState} from 'react';
 import Container from '../shared/Container';
@@ -39,22 +39,27 @@ const AddAmountScreen = ({navigation}) => {
     const [amount, setAmount] = useState();
     const [description, setDescription] = useState(null);
     const [tags, setTags] = useState(null);
+    const [divide_by, setDivideBy] = useState('1');
 
     const {addBudget, editBudget} = useContext(BudgetContext);
     const {addDeduction, editDeduction, image, setImage} = useContext(DeductionContext);
 
     useEffect(() => {
+        if(params?.peopleToShareBetween) setDivideBy(params?.peopleToShareBetween.toString());
+
         if(params?.edit){
             let amt;
+
             if(params.type === 'deductAmount'){
-                const temNumber = Number(params.edit.amount) 
+                const temNumber = Number(params.edit.amount);
                 amt = temNumber > 0 ? temNumber : -temNumber;
                 setIsAmountPostive(temNumber > 0 ? true : false);
-
                 setTags(params.edit.tags);
             }else {
                 amt = params.edit.budget;
             }
+
+            setDivideBy(params.edit.divide_by.toString());
             setAmount((amt).toString());
             setDescription(params.edit.description);
             setCreatedOn(new Date (params.edit.created_on));
@@ -94,6 +99,7 @@ const AddAmountScreen = ({navigation}) => {
                             <View style={tw`ml-3 flex items-center justify-center`}>
                                 {!image && <Text style={tw`font-bold uppercase text-xs text-gray-50`}>no image selected</Text>}
                             </View>
+
                         </View>
                     }
                     <View style={tw`flex flex-row mb-1`}>
@@ -122,7 +128,14 @@ const AddAmountScreen = ({navigation}) => {
                         />
                     )}
                     <TextInput
-                        style={[{ height:200, textAlignVertical: 'top'}, tw`rounded text-black mb-1 bg-gray-400 p-3`]}
+                        style={[tw`rounded bg-gray-400 mb-1 text-black p-3`]}
+                        onChangeText={setDivideBy}
+                        value={divide_by}
+                        keyboardType="numeric"
+                        placeholder="Split the amount in (Default = 1)"
+                    />
+                    <TextInput
+                        style={[{ height:150, textAlignVertical: 'top'}, tw`rounded text-black mb-1 bg-gray-400 p-3`]}
                         multiline={true}
                         value={description}
                         numberOfLines={4}
@@ -161,55 +174,130 @@ const AddAmountScreen = ({navigation}) => {
                         )}
                     </View>
                 </View>
-                {!params.edit ?
-                    (<TouchableOpacity
-                        disabled={!amount}
-                        onPress={() => {
-                        if(params.type === 'deductAmount'){
-                            if(Number(amount)){
-                                addDeduction({
-                                    amount: isAmountPostive ? Number(amount) : -Number(amount),
-                                    description,
-                                    tags,
-                                    created_on,
-                                    budgets_id: params.budgetsID,
-                                    image,
-                                }, params.budgetsID)
-                            }
-                        }else{
-                            if(Number(amount)){
-                                addBudget({
-                                    budget: Number(amount),
-                                    description,
-                                    created_on
-                                })
-                            }
+                <TouchableOpacity
+                    disabled={!amount}
+                    onPress={() => {
+                        const convertedAmount = Number(amount);
+                        const convertedDivideBy = Number(divide_by);
+
+                        if(!convertedAmount)  {
+                            ToastAndroid.showWithGravityAndOffset('amount should be a number' , ToastAndroid.LONG, ToastAndroid.BOTTOM, 0, 50);
+                            return;
                         }
+                        if(!convertedDivideBy || convertedDivideBy % 1 != 0) {
+                            ToastAndroid.showWithGravityAndOffset('Split amount should be a whole number' , ToastAndroid.LONG, ToastAndroid.BOTTOM, 0, 50);
+                            return; 
+                        }
+
+                        const amountObject = params.type === 'deductAmount' ? {
+                            amount: isAmountPostive ? convertedAmount : -convertedAmount,
+                            description,
+                            tags,
+                            created_on,
+                            budgets_id: params.budgetsID,
+                            image,
+                            id: params?.edit?.id,
+                            divide_by: convertedDivideBy
+                        } : {
+                            budget: convertedAmount,
+                            description,
+                            created_on,
+                            id: params?.edit?.id,
+                            divide_by: convertedDivideBy
+                        };
+
+                        if(!params.edit){
+                            params.type === 'deductAmount' ? addDeduction(amountObject, params.budgetsID) : addBudget(amountObject);
+                        }else{
+                            params.type === 'deductAmount' ? editDeduction(params.edit.budgets_id, params.edit.id, amountObject) : editBudget(params.edit.id, amountObject);
+                        }
+
                         setDescription(null);
                         setAmount(null);
                         setTags(null);
                         setImage(null);
                         navigation.goBack()
+                }} style={[{backgroundColorr: '#313238'}, tw`h-12 bg-green-500 mt-1 flex items-center justify-center rounded-md`]}>
+                    <Text style={tw`font-bold text-gray-50 uppercase`}>
+                        { params.edit ?
+                            (<Icon 
+                                name='save-outline'
+                                color='white'
+                                type='ionicon'
+                            />) : (params.type === 'deductAmount' ? 'Add Deduction' : 'Add Amount')
+                        }
+                    </Text>
+                </TouchableOpacity>
+            </SafeAreaView>
+        </Container>
+    )
+}
+
+export default AddAmountScreen
+
+{/* {!params.edit ?
+                    (<TouchableOpacity
+                        disabled={!amount}
+                        onPress={() => {
+                            const convertedAmount = Number(amount);
+                            const convertedDivideBy = Number(divide_by);
+
+                            if(!convertedAmount)  {
+                                ToastAndroid.showWithGravityAndOffset('amount should be a number' , ToastAndroid.LONG, ToastAndroid.BOTTOM, 0, 50);
+                                return;
+                            }
+                            if(!convertedDivideBy || convertedDivideBy % 1 != 0) {
+                                ToastAndroid.showWithGravityAndOffset('Split amount should be a whole number' , ToastAndroid.LONG, ToastAndroid.BOTTOM, 0, 50);
+                                return; 
+                            }
+
+                            if(params.type === 'deductAmount'){
+                                addDeduction({
+                                    amount: isAmountPostive ? convertedAmount : -convertedAmount,
+                                    description,
+                                    tags,
+                                    created_on,
+                                    budgets_id: params.budgetsID,
+                                    image,
+                                    divide_by: convertedDivideBy
+                                }, params.budgetsID)
+                            }else{
+                                addBudget({
+                                    budget: convertedAmount,
+                                    description,
+                                    created_on,
+                                    divide_by: convertedDivideBy
+                                })
+                            }
+                            setDescription(null);
+                            setAmount(null);
+                            setTags(null);
+                            setImage(null);
+                            navigation.goBack()
                     }} style={[{backgroundColor: '#313238'}, tw`h-12 flex items-center justify-center rounded-lg`]}>
                         <Text style={tw`font-bold text-gray-50 uppercase`}>{params.type === 'deductAmount' ? 'Add Deduction' : 'Add Amount'}</Text>
                     </TouchableOpacity>) : (
                         <TouchableOpacity 
                             onPress={() => {
+
+
                                 if(params.type === 'deductAmount'){
                                     editDeduction(params.edit.budgets_id, params.edit.id, {
-                                        amount: isAmountPostive ? Number(amount) : -Number(amount),
+                                        amount: isAmountPostive ? convertedAmount : -convertedAmount,
                                         budgets_id: params.edit.budgets_id,
                                         image: params.edit.image,
                                         description,
                                         tags,
                                         created_on,
+                                        divide_by: convertedDivideBy,
                                         id: params.edit.id,
                                     })
                                 }else{
                                     editBudget(params.edit.id, {
-                                        budget: Number(amount),
+                                        budget: convertedAmount,
                                         description,
                                         created_on,
+                                        divide_by: convertedDivideBy,
                                         id: params.edit.id,
                                     })
                                 }
@@ -226,11 +314,4 @@ const AddAmountScreen = ({navigation}) => {
                             />
                         </TouchableOpacity>
                     )
-                }
-                
-            </SafeAreaView>
-        </Container>
-    )
-}
-
-export default AddAmountScreen
+                } */}

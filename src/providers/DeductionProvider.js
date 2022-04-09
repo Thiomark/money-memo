@@ -147,6 +147,7 @@ export const DeductionProvider = ({children}) => {
     }
 
     const editDeduction = async (budgets_id, deduction_id, editedDeduction) => {
+
         const tempDeductions = deductions;
         fetchLocalDeductions(budgets_id, storedDeductions.map(x => x.id === deduction_id ? {...editedDeduction, created_on: new Date(editedDeduction.created_on).toISOString()} : x))
 

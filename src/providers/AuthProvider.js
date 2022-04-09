@@ -7,13 +7,12 @@ export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
-    const [isSubmitting, setIsSubmitting] = useState(false)
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
         AsyncStorage.getItem('user').then(x => {
             if(x){
-                const { token } = JSON.parse(x);
-                setUser(token)
+                setUser(JSON.parse(x));
             }
         })
     }, []);

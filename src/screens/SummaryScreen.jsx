@@ -7,7 +7,7 @@ import { DeductionContext } from '../providers/DeductionProvider';
 import * as Clipboard from 'expo-clipboard';
 import { format } from 'date-fns';
 
-const Item = ({field, results, pre, noCopy}) => {
+const Item = ({field, results, pre, noCopy, suf}) => {
     const copyToClipboard = (word) => {
         Clipboard.setString(word);
     };
@@ -20,7 +20,7 @@ const Item = ({field, results, pre, noCopy}) => {
 
         }} style={tw`pb-4 px-2`}>
             <Text style={tw`font-bold text-lg text-gray-100`}>{field}</Text>
-            <Text style={tw`text-gray-300`}>{pre ? `${pre} ` : ''}{results}</Text>
+            <Text style={tw`text-gray-300`}>{pre ? `${pre} ` : ''}{results}{suf ? ` ${suf}` : ''}</Text>
         </TouchableOpacity>
     )
 }
@@ -54,6 +54,7 @@ const SummaryScreen = ({navigation}) => {
                             {deduction.tags && (
                                 <Item field='Tags' results={deduction.tags}/>
                             )}
+                            <Item field='Split amount between' results={deduction.divide_by.toString()} suf={deduction.divide_by > 1 ? 'People' : 'Person'}/>
                             <Item noCopy field='Date' results={format(new Date(deduction.created_on), 'PPPPpppp')}/>
                         </View>
                     </ScrollView>

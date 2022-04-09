@@ -17,9 +17,10 @@ export const BudgetProvider = ({children}) => {
         AsyncStorage.getItem('budgets')
             .then(async stringifiedBudgets => {
                 const savedBudgets = JSON.parse(stringifiedBudgets);
-                if(savedBudgets && savedBudgets.length > 0)
+                if(savedBudgets && savedBudgets.length > 0){
                     setBudgets(groupItems(savedBudgets, 'created_on', archiveBudgets));
                     setStoredBudgets(savedBudgets);
+                }
             });
     }, []);
 
@@ -46,6 +47,7 @@ export const BudgetProvider = ({children}) => {
         
         axiosInterceptor.get(`/budgets`)
             .then(({data}) => {
+    
                 const localOnes = storedBudgets.filter(x => !x.user_id);
                 const serverBudgets = data.map(x => ({...x, archived: storedBudgets.find(y => y.id === x.id)?.archived}));
                 const newUpdatedArrayOfBudgets = [...localOnes, ...serverBudgets];
@@ -113,6 +115,7 @@ export const BudgetProvider = ({children}) => {
 
             if(!user){
                 setStoredBudgets(pevDe => [tempBudget, ...pevDe]);
+                return;
             }
         }
         

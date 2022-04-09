@@ -9,6 +9,7 @@ import { DeductionContext } from '../providers/DeductionProvider';
 import { AuthContext } from '../providers/AuthProvider';
 import AddDeductionButton from '../components/AddDeductionButton';
 import { getBudgetsDeductedAmount, formateAmount } from '../utils/helperFunctions';
+import PeopleSharingComponent from '../components/PeopleSharingComponent';
 
 const HomeScreen = ({navigation}) => {
     const {fetchBudgets, budgets, deleteBudget, addBudget, archiveBudget} = useContext(BudgetContext);
@@ -93,7 +94,7 @@ const HomeScreen = ({navigation}) => {
                         <TouchableOpacity 
                             onPress={() => {
                                 fetchLocalDeductions(item.id)
-                                navigation.navigate('Deductions', {id: item.id, amount: item.budget, remaining_amount: getRemaingAmount(item)});
+                                navigation.navigate('Deductions', {id: item.id, amount: item.budget, remaining_amount: getRemaingAmount(item), peopleToShareBetween: item.divide_by});
                             }} 
                             onLongPress={() => {
                                 setSelectedItem(item)
@@ -125,7 +126,7 @@ const HomeScreen = ({navigation}) => {
                                 {
                                     item.description && <Text style={tw`text-xs text-gray-400 mt-2`}>{item.description}</Text>
                                 }
-                                
+                                {item.divide_by > 1 && <PeopleSharingComponent people={item.divide_by} amount={item.budget / item.divide_by} />}
                             </View>
                         </TouchableOpacity>
                     )}
