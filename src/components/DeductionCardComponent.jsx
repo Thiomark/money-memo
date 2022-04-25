@@ -4,9 +4,11 @@ import { Icon } from 'react-native-elements';
 import {formateAmount} from '../utils/helperFunctions';
 import { formatDistanceToNow } from 'date-fns'
 import PeopleSharingComponent from './PeopleSharingComponent';
+import { useState } from 'react';
 
 const DeductionCardComponent = ({item, isSelected, pressAndHold, viewDeduction, areDeductionsSelected, removeDeduction, navigation, sortByDate, belongToUser}) => {
-    
+    const [showText, setShowText] = useState(false);
+
     return (
         <TouchableOpacity 
             style={tw`mb-1`}
@@ -56,12 +58,18 @@ const DeductionCardComponent = ({item, isSelected, pressAndHold, viewDeduction, 
                                 }
                             </View>
                             {
-                                belongToUser && <Icon
-                                    name='alert-circle-outline'
-                                    type='ionicon'
-                                    color='red'
-                                    size={30}
-                                />
+                                belongToUser && item.user_id && <TouchableOpacity onPress={() => setShowText(prev => !prev)}>
+                                    {
+                                        showText ? <Text style={tw`font-bold text-red-600 uppercase text-xs`}>Not mine</Text> : (
+                                            <Icon
+                                                name='alert-circle-outline'
+                                                type='ionicon'
+                                                color='red'
+                                                size={30}
+                                            />
+                                        )
+                                    }
+                                </TouchableOpacity>
                             }
                         </View>
                         {item.description && <Text style={tw`text-gray-300 text-xs`}>{item.description}</Text>}

@@ -42,7 +42,7 @@ const HomeScreen = ({navigation}) => {
             }
         },
         { 
-            title: 'Add User',
+            title: 'Show Other Users',
             onPress: () => {
                 if(!user) 
                     navigation.navigate('Auth');
@@ -106,7 +106,6 @@ const HomeScreen = ({navigation}) => {
                                 {
                                    item?.recuring && <Text style={tw`text-blue-200 font-bold uppercase text-xs self-end`}>recuring every month on 20th</Text>
                                 }
-                                
                                 <View style={tw`flex flex-row items-center justify-between`}>
                                     <View style={tw`flex items-center flex-row`}>
                                         <Text style={tw`text-green-300 font-bold`}>{getRemaingAmount(item)}</Text>
@@ -123,9 +122,7 @@ const HomeScreen = ({navigation}) => {
                                     }
                                 </View>
                                 <Text style={tw`text-xs text-gray-200`}>initial amount = {formateAmount(item?.budget)}</Text>
-                                {
-                                    item.description && <Text style={tw`text-xs text-gray-400 mt-2`}>{item.description}</Text>
-                                }
+                                {item.description ? <Text style={tw`text-xs text-gray-400 mt-2`}>{item?.description}</Text> : null}
                                 {item.divide_by > 1 && <PeopleSharingComponent people={item.divide_by} amount={item.budget / item.divide_by} />}
                             </View>
                         </TouchableOpacity>
