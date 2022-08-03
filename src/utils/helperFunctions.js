@@ -71,7 +71,9 @@ export const getBudgetsDeductedAmount = (storedDeductions, budgetID, showCuurenc
 // }
 
 let baseUrl = 'https://buget-123-new.herokuapp.com/api/v2'
-if(dev) baseUrl = 'http://192.168.0.101:5000/api/v2'
+// if(dev) baseUrl = 'http://192.168.0.101:5000/api/v2'
+if(dev) baseUrl = 'http://localhost/api/v2'
+
 
 export const url = baseUrl;
 
