@@ -10,10 +10,9 @@ export const BudgetContext = createContext();
 export const BudgetProvider = ({children}) => {
     const [storedBudgets, setStoredBudgets] = useState([]);
     const [budgets, setBudgets] = useState([]);
-    const {user} = useContext(AuthContext);
-    const [archiveBudgets, setArchiveBudgets] = useState(true);
+    tgt
 
-    useEffect(() => {
+    useEffect(() => {t
         AsyncStorage.getItem('budgets')
             .then(async stringifiedBudgets => {
                 const savedBudgets = JSON.parse(stringifiedBudgets);
